@@ -1,0 +1,8 @@
+[
+    {
+        "id": "h1",
+        "name": "Hotel Example",
+        "location": "123 Example St, City, Country",
+        "rooms": ["r1", "r2", "r3"]
+    }
+]
