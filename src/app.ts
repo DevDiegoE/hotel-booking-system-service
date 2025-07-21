@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 
 import { swaggerDocs } from '../config/swagger.ts';
+import hotelRoutes from './infraestructure/express/routes/hotelRoutes.ts';
+import roomRoutes from './infraestructure/express/routes/roomRoutes.ts';
 
 dotenv.config();
 
@@ -15,6 +17,9 @@ app.use(cors({ origin: '*' }));
 app.get('/', (req, res) => {
     res.send('Welcome to the Hotel Booking System!');
 });
+
+app.use('/hotels', hotelRoutes);
+app.use('/rooms', roomRoutes);
 
 swaggerDocs(app);
 app.listen(PORT, () => {

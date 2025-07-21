@@ -7,7 +7,10 @@
   "scripts": {
     "start": "tsx src/app.ts",
     "dev": "tsx watch src/app.ts",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix && prettier --write .",
+    "prettier:check": "prettier --check ."
   },
   "repository": {
     "type": "git",
@@ -21,6 +24,7 @@
   },
   "homepage": "https://gitlab.com/jala-university1/cohort-2/oficial-es-programaci-n-5-cspr-351.ga.t2.25.m1/secci-n-a/diego.erquicia/capstone/hotel-booking-system-service#readme",
   "devDependencies": {
+    "@eslint/js": "^9.31.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
@@ -30,11 +34,14 @@
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jest": "^29.0.1",
+    "eslint-plugin-prettier": "^5.5.3",
     "jest": "^30.0.4",
     "ts-jest": "^29.4.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.37.0"
   },
   "dependencies": {
     "cors": "^2.8.5",
