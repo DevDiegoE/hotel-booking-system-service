@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 
 import { swaggerDocs } from '../config/swagger.ts';
+import { connectToDatabase } from '../config/mongoose.ts';
+
 import hotelRoutes from './infraestructure/express/routes/hotelRoutes.ts';
 import roomRoutes from './infraestructure/express/routes/roomRoutes.ts';
 
@@ -21,7 +23,17 @@ app.get('/', (req, res) => {
 app.use('/hotels', hotelRoutes);
 app.use('/rooms', roomRoutes);
 
-swaggerDocs(app);
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+    try {
+        await connectToDatabase();
+        swaggerDocs(app);
+        app.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error('Error starting the server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
