@@ -5,9 +5,9 @@ export interface Booking {
     checkInDate: Date;
     checkOutDate: Date;
     totalPrice: number;
-    guests: {
-        type: 'adult' | 'child';
-        count: number;
+    guests?: {
+        type?: 'adult' | 'child';
+        count?: number;
     };
     status: 'pending' | 'confirmed' | 'cancelled';
     createdAt?: Date;

@@ -10,7 +10,10 @@
     "test": "jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix && prettier --write .",
-    "prettier:check": "prettier --check ."
+    "prettier:check": "prettier --check .",
+    "tsoa:routes": "tsoa routes",
+    "tsoa:spec": "tsoa spec",
+    "tsoa:build": "npm run tsoa:routes && npm run tsoa:spec"
   },
   "repository": {
     "type": "git",
@@ -40,6 +43,7 @@
     "eslint-plugin-prettier": "^5.5.3",
     "jest": "^30.0.4",
     "ts-jest": "^29.4.0",
+    "tsoa": "^6.6.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.37.0"
@@ -51,7 +55,10 @@
     "js-yaml": "^4.1.0",
     "mongoose": "^8.16.4",
     "prettier": "^3.6.2",
+    "reflect-metadata": "^0.2.2",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "tsyringe": "^4.10.0",
+    "zod": "^4.0.10"
   }
 }

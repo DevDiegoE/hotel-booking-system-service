@@ -5,7 +5,7 @@ info:
     description: API documentation for the Hotel Booking System service.
 
 servers:
-    - url: http://localhost:{$PORT}
+    - url: http://localhost:{$PORT}/api/v1
       description: Local development server
 
 security:
