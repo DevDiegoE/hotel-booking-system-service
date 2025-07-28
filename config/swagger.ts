@@ -47,7 +47,7 @@ const loadAndMergePathsAndDocsFromDirectory = (
 };
 
 export const swaggerDocs = (app: Express): void => {
-    const swaggerBasePath = path.resolve('src/infraestructure/express/docs/swagger.yaml');
+    const swaggerBasePath = path.resolve('src/infrastructure/express/docs/swagger.yaml');
     const swaggerBase = loadYamlFile(swaggerBasePath);
 
     if (!swaggerBase || typeof swaggerBase !== 'object') {
@@ -62,7 +62,7 @@ export const swaggerDocs = (app: Express): void => {
         });
     }
 
-    const pathsDir = path.resolve('src/infraestructure/express/docs/paths');
+    const pathsDir = path.resolve('src/infrastructure/express/docs/paths');
     const { mergedPaths, mergedComponents } = loadAndMergePathsAndDocsFromDirectory(pathsDir);
 
     swaggerBase.paths = mergedPaths;

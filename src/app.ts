@@ -1,3 +1,6 @@
+import 'reflect-metadata';
+import '../config/container.ts';
+
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -5,13 +8,16 @@ import cors from 'cors';
 import { swaggerDocs } from '../config/swagger.ts';
 import { connectToDatabase } from '../config/mongoose.ts';
 
-import hotelRoutes from './infraestructure/express/routes/hotelRoutes.ts';
-import roomRoutes from './infraestructure/express/routes/roomRoutes.ts';
+import { hotelRoutes } from './infrastructure/express/routes/hotelRoutes.ts';
+
 
 dotenv.config();
 
 const app = express();
+const routes = express.Router();
+
 const PORT = process.env.PORT || 3000;
+const API_PREFIX = '/api/v1';
 
 app.use(express.json());
 app.use(cors({ origin: '*' }));
@@ -20,8 +26,9 @@ app.get('/', (req, res) => {
     res.send('Welcome to the Hotel Booking System!');
 });
 
-app.use('/hotels', hotelRoutes);
-app.use('/rooms', roomRoutes);
+routes.use('/hotels', hotelRoutes);
+
+app.use(API_PREFIX, routes);
 
 const startServer = async () => {
     try {
