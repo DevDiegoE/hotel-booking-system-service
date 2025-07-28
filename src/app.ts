@@ -9,7 +9,7 @@ import { swaggerDocs } from '../config/swagger.ts';
 import { connectToDatabase } from '../config/mongoose.ts';
 
 import { hotelRoutes } from './infrastructure/express/routes/hotelRoutes.ts';
-
+import { roomRoutes } from './infrastructure/express/routes/roomRoutes.ts';
 
 dotenv.config();
 
@@ -27,6 +27,7 @@ app.get('/', (req, res) => {
 });
 
 routes.use('/hotels', hotelRoutes);
+routes.use('/rooms', roomRoutes);
 
 app.use(API_PREFIX, routes);
 
