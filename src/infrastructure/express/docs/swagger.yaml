@@ -1,0 +1,20 @@
+openapi: 3.0.0
+info:
+    title: Hotel Booking System API
+    version: 1.0.0
+    description: API documentation for the Hotel Booking System service.
+
+servers:
+    - url: http://localhost:{$PORT}/api/v1
+      description: Local development server
+
+security:
+    - BearerAuth: []
+
+components:
+    securitySchemes:
+        BearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: Use JWT token for authentication
