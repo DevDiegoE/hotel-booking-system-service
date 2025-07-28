@@ -12,6 +12,7 @@ import { hotelRoutes } from './infrastructure/express/routes/hotelRoutes.ts';
 import { roomRoutes } from './infrastructure/express/routes/roomRoutes.ts';
 import { bookingRoutes } from './infrastructure/express/routes/bookingRoutes.ts';
 import { promotionRoutes } from './infrastructure/express/routes/promotionRoutes.ts';
+import { authRoutes } from './infrastructure/express/routes/authRoutes.ts'
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.get('/', (req, res) => {
     res.send('Welcome to the Hotel Booking System!');
 });
 
+routes.use('/auth', authRoutes)
 routes.use('/hotels', hotelRoutes);
 routes.use('/rooms', roomRoutes);
 routes.use('/bookings', bookingRoutes);
