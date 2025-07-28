@@ -11,6 +11,7 @@ import { connectToDatabase } from '../config/mongoose.ts';
 import { hotelRoutes } from './infrastructure/express/routes/hotelRoutes.ts';
 import { roomRoutes } from './infrastructure/express/routes/roomRoutes.ts';
 import { bookingRoutes } from './infrastructure/express/routes/bookingRoutes.ts';
+import { promotionRoutes } from './infrastructure/express/routes/promotionRoutes.ts';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 routes.use('/hotels', hotelRoutes);
 routes.use('/rooms', roomRoutes);
 routes.use('/bookings', bookingRoutes);
+routes.use('/promotions', promotionRoutes);
 
 app.use(API_PREFIX, routes);
 
