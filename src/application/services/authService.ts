@@ -4,21 +4,27 @@ import jwt from 'jsonwebtoken';
 import { UserModel } from '../../infrastructure/database/mongoose/userModel.ts';
 import { User } from '../../domain/entities/user.ts';
 import { UserService } from './userService.ts';
+import { ValidationException } from '../../domain/exceptions/DomainException.ts';
 
 @injectable()
 export class AuthService {
-
     constructor(@inject(UserService) private readonly userService: UserService) {}
 
     async register(user: User): Promise<User> {
+        if (!user.email || !user.password) {
+            throw new ValidationException('Email and password are required');
+        }
         const existingUser = await this.userService.findByEmail(user.email);
         if (existingUser) {
-            throw new Error('User already exists');
+            throw new ValidationException('User already exists');
         }
         return this.userService.create(user);
     }
 
     async login(email: string, password: string): Promise<string | null> {
+        if (!email || !password) {
+            throw new ValidationException('Email and password are required');
+        }
         const user = await UserModel.findOne({ email });
         if (!user || !(await user.comparePassword(password))) return null;
 

@@ -4,6 +4,11 @@ import { inject, injectable } from 'tsyringe';
 import mongoose from 'mongoose';
 
 import { HotelService } from '../../../application/services/hotelService.ts';
+import {
+    ValidationException,
+    NotFoundException,
+    BusinessRuleException,
+} from '../../../domain/exceptions/DomainException.ts';
 
 @injectable()
 export class HotelController {
@@ -14,6 +19,18 @@ export class HotelController {
             const hotel = await this.hotelService.create(req.body);
             return res.status(201).json(hotel);
         } catch (error) {
+            if (error instanceof ValidationException) {
+                return res.status(400).json({
+                    message: 'Validation Error',
+                    error: error.message,
+                });
+            }
+            if (error instanceof BusinessRuleException) {
+                return res.status(400).json({
+                    message: 'Business Rule Violation',
+                    error: error.message,
+                });
+            }
             return res
                 .status(500)
                 .json({ message: 'Internal Server Error', error: (error as Error).message });
@@ -45,6 +62,12 @@ export class HotelController {
             }
             return res.status(200).json(hotel);
         } catch (error) {
+            if (error instanceof ValidationException) {
+                return res.status(400).json({
+                    message: 'Validation Error',
+                    error: error.message,
+                });
+            }
             return res
                 .status(500)
                 .json({ message: 'Internal Server Error', error: (error as Error).message });
@@ -53,12 +76,36 @@ export class HotelController {
 
     update = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const updatedHotel = await this.hotelService.updateById(req.params.id, req.body);
+            const id = req.params.id;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({ message: 'Invalid hotel ID format' });
+            }
+
+            const updatedHotel = await this.hotelService.updateById(id, req.body);
             if (!updatedHotel) {
                 return res.status(404).json({ message: 'Hotel not found' });
             }
             return res.status(200).json(updatedHotel);
         } catch (error) {
+            if (error instanceof ValidationException) {
+                return res.status(400).json({
+                    message: 'Validation Error',
+                    error: error.message,
+                });
+            }
+            if (error instanceof NotFoundException) {
+                return res.status(404).json({
+                    message: 'Not Found',
+                    error: error.message,
+                });
+            }
+            if (error instanceof BusinessRuleException) {
+                return res.status(400).json({
+                    message: 'Business Rule Violation',
+                    error: error.message,
+                });
+            }
             return res
                 .status(500)
                 .json({ message: 'Internal Server Error', error: (error as Error).message });
@@ -67,9 +114,27 @@ export class HotelController {
 
     deleteById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            await this.hotelService.deleteById(req.params.id);
+            const id = req.params.id;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({ message: 'Invalid hotel ID format' });
+            }
+
+            await this.hotelService.deleteById(id);
             return res.status(204).send();
         } catch (error) {
+            if (error instanceof ValidationException) {
+                return res.status(400).json({
+                    message: 'Validation Error',
+                    error: error.message,
+                });
+            }
+            if (error instanceof NotFoundException) {
+                return res.status(404).json({
+                    message: 'Not Found',
+                    error: error.message,
+                });
+            }
             return res
                 .status(500)
                 .json({ message: 'Internal Server Error', error: (error as Error).message });
