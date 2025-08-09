@@ -1,200 +1,315 @@
 paths:
     /bookings:
         post:
-          summary: Create a new booking
-          tags:
-            - Bookings
-          requestBody:
-            required: true
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BookingInput'
-          responses:
-            '201':
-              description: Booking created successfully
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/Booking'
-            '400':
-              description: Invalid input
-            '500':
-              description: Internal server error
+            summary: Create a new booking
+            tags:
+                - Bookings
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/BookingInput'
+            responses:
+                '201':
+                    description: Booking created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Booking'
+                '400':
+                    description: Invalid input
+                '500':
+                    description: Internal server error
 
         get:
-          summary: Get all bookings
-          tags:
-            - Bookings
-          responses:
-            '200':
-              description: List of bookings
-              content:
-                application/json:
+            summary: Get all bookings
+            tags:
+                - Bookings
+            responses:
+                '200':
+                    description: List of bookings
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Booking'
+                '500':
+                    description: Internal server error
+
+    /bookings/user/{userId}:
+        get:
+            summary: Get bookings by user ID
+            tags:
+                - Bookings
+            parameters:
+                - in: path
+                  name: userId
+                  required: true
                   schema:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Booking'
-            '500':
-              description: Internal server error
+                      type: string
+            responses:
+                '200':
+                    description: List of bookings for the user
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Booking'
+
+    /bookings/hotel/{hotelId}:
+        get:
+            summary: Get bookings by hotel ID
+            tags:
+                - Bookings
+            parameters:
+                - in: path
+                  name: hotelId
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: List of bookings for the hotel
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Booking'
+
+    /bookings/room/{roomId}:
+        get:
+            summary: Get bookings by room ID
+            tags:
+                - Bookings
+            parameters:
+                - in: path
+                  name: roomId
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: List of bookings for the room
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Booking'
+
+    /bookings/status/{status}:
+        get:
+            summary: Get bookings by status
+            tags:
+                - Bookings
+            parameters:
+                - in: path
+                  name: status
+                  required: true
+                  schema:
+                      type: string
+                      enum: [pending, confirmed, cancelled]
+            responses:
+                '200':
+                    description: List of bookings with the specified status
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Booking'
+
+    /bookings/date-range:
+        get:
+            summary: Get bookings by date range
+            tags:
+                - Bookings
+            parameters:
+                - in: query
+                  name: checkInDate
+                  required: true
+                  schema:
+                      type: string
+                      format: date
+                - in: query
+                  name: checkOutDate
+                  required: true
+                  schema:
+                      type: string
+                      format: date
+            responses:
+                '200':
+                    description: List of bookings within the date range
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Booking'
+                '400':
+                    description: Missing required query parameters
 
     /bookings/{id}:
         get:
-          summary: Get a booking by ID
-          tags:
-            - Bookings
-          parameters:
-            - in: path
-              name: id
-              required: true
-              schema:
-                type: string
-          responses:
-            '200':
-              description: Booking found
-              content:
-                application/json:
+            summary: Get a booking by ID
+            tags:
+                - Bookings
+            parameters:
+                - in: path
+                  name: id
+                  required: true
                   schema:
-                    $ref: '#/components/schemas/Booking'
-            '400':
-              description: Invalid ID format
-            '404':
-              description: Booking not found
-            '500':
-              description: Internal server error
+                      type: string
+            responses:
+                '200':
+                    description: Booking found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Booking'
+                '400':
+                    description: Invalid ID format
+                '404':
+                    description: Booking not found
+                '500':
+                    description: Internal server error
 
         put:
-          summary: Update a booking by ID
-          tags:
-            - Bookings
-          parameters:
-            - in: path
-              name: id
-              required: true
-              schema:
-                type: string
-          requestBody:
-            required: true
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/BookingInputPartial'
-          responses:
-            '200':
-              description: Booking updated successfully
-              content:
-                application/json:
+            summary: Update a booking by ID
+            tags:
+                - Bookings
+            parameters:
+                - in: path
+                  name: id
+                  required: true
                   schema:
-                    $ref: '#/components/schemas/Booking'
-            '404':
-              description: Booking not found
-            '500':
-              description: Internal server error
+                      type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/BookingInputPartial'
+            responses:
+                '200':
+                    description: Booking updated successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Booking'
+                '404':
+                    description: Booking not found
+                '500':
+                    description: Internal server error
 
         delete:
-          summary: Delete a booking by ID
-          tags:
-            - Bookings
-          parameters:
-            - in: path
-              name: id
-              required: true
-              schema:
-                type: string
-          responses:
-            '204':
-              description: Booking deleted successfully
-            '500':
-              description: Internal server error
+            summary: Delete a booking by ID
+            tags:
+                - Bookings
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '204':
+                    description: Booking deleted successfully
+                '500':
+                    description: Internal server error
 
 components:
-  schemas:
-    BookingInput:
-      type: object
-      required:
-        - userId
-        - hotelId
-        - roomId
-        - checkInDate
-        - checkOutDate
-        - totalPrice
-        - guests
-        - status
-      properties:
-        userId:
-          type: string
-          example: "user123"
-        hotelId:
-          type: string
-          example: "64eab3e5f47d3b3e9f73f612"
-        roomId:
-          type: string
-          example: "64ead1d6f81a9c001efc8a92"
-        checkInDate:
-          type: string
-          format: date
-          example: "2025-08-01"
-        checkOutDate:
-          type: string
-          format: date
-          example: "2025-08-05"
-        totalPrice:
-          type: number
-          example: 480.00
-        guests:
-          type: object
-          properties:
-            type:
-              type: string
-              enum: [adult, child]
-              example: "adult"
-            count:
-              type: integer
-              example: 2
-        status:
-          type: string
-          enum: [pending, confirmed, cancelled]
-          example: "confirmed"
+    schemas:
+        BookingInput:
+            type: object
+            required:
+                - userId
+                - hotelId
+                - roomId
+                - checkInDate
+                - checkOutDate
+                - totalPrice
+                - guests
+                - status
+            properties:
+                userId:
+                    type: string
+                    example: 'user123'
+                hotelId:
+                    type: string
+                    example: '64eab3e5f47d3b3e9f73f612'
+                roomId:
+                    type: string
+                    example: '64ead1d6f81a9c001efc8a92'
+                checkInDate:
+                    type: string
+                    format: date
+                    example: '2025-08-01'
+                checkOutDate:
+                    type: string
+                    format: date
+                    example: '2025-08-05'
+                totalPrice:
+                    type: number
+                    example: 480.00
+                guests:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                            enum: [adult, child]
+                            example: 'adult'
+                        count:
+                            type: integer
+                            example: 2
+                status:
+                    type: string
+                    enum: [pending, confirmed, cancelled]
+                    example: 'confirmed'
 
-    BookingInputPartial:
-      type: object
-      properties:
-        userId:
-          type: string
-        hotelId:
-          type: string
-        roomId:
-          type: string
-        checkInDate:
-          type: string
-          format: date
-        checkOutDate:
-          type: string
-          format: date
-        totalPrice:
-          type: number
-        guests:
-          type: object
-          properties:
-            type:
-              type: string
-              enum: [adult, child]
-            count:
-              type: integer
-        status:
-          type: string
-          enum: [pending, confirmed, cancelled]
+        BookingInputPartial:
+            type: object
+            properties:
+                userId:
+                    type: string
+                hotelId:
+                    type: string
+                roomId:
+                    type: string
+                checkInDate:
+                    type: string
+                    format: date
+                checkOutDate:
+                    type: string
+                    format: date
+                totalPrice:
+                    type: number
+                guests:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                            enum: [adult, child]
+                        count:
+                            type: integer
+                status:
+                    type: string
+                    enum: [pending, confirmed, cancelled]
 
-    Booking:
-      allOf:
-        - $ref: '#/components/schemas/BookingInput'
-        - type: object
-          properties:
-            _id:
-              type: string
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
+        Booking:
+            allOf:
+                - $ref: '#/components/schemas/BookingInput'
+                - type: object
+                  properties:
+                      _id:
+                          type: string
+                      createdAt:
+                          type: string
+                          format: date-time
+                      updatedAt:
+                          type: string
+                          format: date-time

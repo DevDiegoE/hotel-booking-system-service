@@ -13,11 +13,17 @@ const roomSchema = new Schema<RoomDocument>(
         },
         basePrice: { type: Number, required: true },
         amenities: { type: [String], default: [] },
+        capacity: { type: Number, required: true, min: 1 },
     },
     {
         timestamps: true,
         versionKey: false,
     }
 );
+
+roomSchema.index({ hotelId: 1 });
+roomSchema.index({ basePrice: 1 });
+roomSchema.index({ capacity: 1 });
+roomSchema.index({ type: 1 });
 
 export const RoomModel = model<RoomDocument>('Room', roomSchema);
