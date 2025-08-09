@@ -1,0 +1,64 @@
+paths:
+    /auth/register:
+        post:
+            summary: Register a new user
+            tags:
+                - Auth
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AuthInput'
+            responses:
+                '201':
+                    description: User registered successfully
+                '400':
+                    description: Registration failed
+
+    /auth/login:
+        post:
+            summary: Login and obtain JWT token
+            tags:
+                - Auth
+            security: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AuthInput'
+            responses:
+                '200':
+                    description: Successful login
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    token:
+                                        type: string
+                '401':
+                    description: Invalid credentials
+                '500':
+                    description: Login failed
+
+components:
+    schemas:
+        AuthInput:
+            type: object
+            required:
+                - email
+                - password
+            properties:
+                email:
+                    type: string
+                    format: email
+                    example: user@example.com
+                password:
+                    type: string
+                    example: password123
+                role:
+                    type: string
+                    enum: [user, admin]

@@ -38,6 +38,23 @@ paths:
                 '500':
                     description: Internal server error
 
+    /hotels/locations:
+        get:
+            summary: Get all distinct hotel locations
+            tags:
+                - Hotels
+            responses:
+                '200':
+                    description: List of distinct locations
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    type: string
+                '500':
+                    description: Internal server error
+
     /hotels/{id}:
         get:
             summary: Get a hotel by ID
@@ -115,45 +132,45 @@ components:
         HotelInput:
             type: object
             required:
-              - name
-              - location
+                - name
+                - location
             properties:
-              name:
-                type: string
-                example: "Hotel Sunrise"
-              location:
-                type: string
-                example: "Santa Cruz, Bolivia"
-              description:
-                type: string
-                example: "A cozy hotel with free Wi-Fi and breakfast."
+                name:
+                    type: string
+                    example: 'Hotel Sunrise'
+                location:
+                    type: string
+                    example: 'Santa Cruz, Bolivia'
+                description:
+                    type: string
+                    example: 'A cozy hotel with free Wi-Fi and breakfast.'
 
         HotelInputPartial:
             type: object
             properties:
-              name:
-                type: string
-                example: "Hotel Sunrise"
-              location:
-                type: string
-                example: "Santa Cruz, Bolivia"
-              description:
-                type: string
-                example: "A cozy hotel with free Wi-Fi and breakfast."
+                name:
+                    type: string
+                    example: 'Hotel Sunrise'
+                location:
+                    type: string
+                    example: 'Santa Cruz, Bolivia'
+                description:
+                    type: string
+                    example: 'A cozy hotel with free Wi-Fi and breakfast.'
 
         Hotel:
             allOf:
-              - $ref: '#/components/schemas/HotelInput'
-              - type: object
-                properties:
-                  _id:
-                    type: string
-                    example: "64eab3e5f47d3b3e9f73f612"
-                  createdAt:
-                    type: string
-                    format: date-time
-                    example: "2025-07-27T19:00:00.000Z"
-                  updatedAt:
-                    type: string
-                    format: date-time
-                    example: "2025-07-27T19:00:00.000Z"
+                - $ref: '#/components/schemas/HotelInput'
+                - type: object
+                  properties:
+                      _id:
+                          type: string
+                          example: '64eab3e5f47d3b3e9f73f612'
+                      createdAt:
+                          type: string
+                          format: date-time
+                          example: '2025-07-27T19:00:00.000Z'
+                      updatedAt:
+                          type: string
+                          format: date-time
+                          example: '2025-07-27T19:00:00.000Z'
