@@ -22,6 +22,16 @@ export class HotelValidator {
         if (hotel.description && hotel.description.length > 1000) {
             throw new ValidationException('Hotel description cannot exceed 1000 characters');
         }
+
+        if (hotel.rating !== undefined) {
+            if (typeof hotel.rating !== 'number' || hotel.rating < 0 || hotel.rating > 5) {
+                throw new ValidationException('Rating must be a number between 0 and 5');
+            }
+        }
+
+        if (hotel.imageUrl && typeof hotel.imageUrl !== 'string') {
+            throw new ValidationException('Image URL must be a valid string');
+        }
     }
 
     static validateUpdate(hotel: Partial<Hotel>): void {
@@ -45,6 +55,16 @@ export class HotelValidator {
 
         if (hotel.description !== undefined && hotel.description.length > 1000) {
             throw new ValidationException('Hotel description cannot exceed 1000 characters');
+        }
+
+        if (hotel.rating !== undefined) {
+            if (typeof hotel.rating !== 'number' || hotel.rating < 0 || hotel.rating > 5) {
+                throw new ValidationException('Rating must be a number between 0 and 5');
+            }
+        }
+
+        if (hotel.imageUrl !== undefined && typeof hotel.imageUrl !== 'string') {
+            throw new ValidationException('Image URL must be a valid string');
         }
     }
 }

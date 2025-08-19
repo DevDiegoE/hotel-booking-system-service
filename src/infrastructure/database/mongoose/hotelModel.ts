@@ -7,7 +7,9 @@ const hotelSchema = new Schema<HotelDocument>(
     {
         name: { type: String, required: true },
         location: { type: String, required: true },
-        description: { type: String, default: '' }
+        description: { type: String, default: '' },
+        rating : { type: Number, min: 0, max: 5, default: 0 },
+        imageUrl: { type: String, default: '' },
     },
     {
         timestamps: true,

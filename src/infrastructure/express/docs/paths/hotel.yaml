@@ -144,6 +144,12 @@ components:
                 description:
                     type: string
                     example: 'A cozy hotel with free Wi-Fi and breakfast.'
+                rating:
+                    type: number
+                    example: 5
+                image:
+                    type: string
+                    example: 'https://example.com/hotel.jpg'
 
         HotelInputPartial:
             type: object
@@ -157,6 +163,12 @@ components:
                 description:
                     type: string
                     example: 'A cozy hotel with free Wi-Fi and breakfast.'
+                rating:
+                    type: number
+                    example: 5
+                image:
+                    type: string
+                    example: 'https://example.com/hotel.jpg'
 
         Hotel:
             allOf:
