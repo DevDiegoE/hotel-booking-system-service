@@ -30,6 +30,8 @@ export interface CreateBookingResponse {
         userId: string;
         hotelId: string;
         roomId: string;
+        roomType: string;
+        quantity: number;
         checkInDate: Date;
         checkOutDate: Date;
         totalPrice: number;
@@ -77,8 +79,8 @@ export class CreateBookingUseCase {
             request.checkOutDate
         );
 
-        const allBookingsToCreate: Booking[] = [];
         let expectedTotalPrice = 0;
+        const validatedRoomSelections = [];
 
         for (const selection of request.roomSelections) {
             const roomTypes = await this.roomRepository.findByTypeAndHotelId(
@@ -93,12 +95,23 @@ export class CreateBookingUseCase {
             }
 
             const roomType = roomTypes[0];
-            const occupiedCount = conflictingBookings.filter(
-                (b) =>
-                    b.status !== 'cancelled' &&
-                    b.roomType === selection.roomType &&
-                    b.hotelId === request.hotelId
-            ).length;
+            const occupiedCount = conflictingBookings
+                .filter((b) => b.status !== 'cancelled' && b.hotelId === request.hotelId)
+                .reduce((total, booking) => {
+                    if (booking.roomSelections) {
+                        const roomSelection = booking.roomSelections.find(
+                            (rs) => rs.roomType === selection.roomType
+                        );
+                        return total + (roomSelection?.quantity || 0);
+                    } else {
+                        return (
+                            total +
+                            ((booking as any).roomType === selection.roomType
+                                ? (booking as any).quantity || 1
+                                : 0)
+                        );
+                    }
+                }, 0);
 
             const availableCount = roomType.totalRooms - occupiedCount;
 
@@ -110,27 +123,31 @@ export class CreateBookingUseCase {
 
             const stayDuration = request.checkOutDate.getTime() - request.checkInDate.getTime();
             const days = Math.ceil(stayDuration / (1000 * 60 * 60 * 24));
-            const pricePerRoom = roomType.basePrice * days;
-            expectedTotalPrice += pricePerRoom * selection.quantity;
+            let pricePerRoom = roomType.basePrice * days;
 
-            for (let i = 0; i < selection.quantity; i++) {
-                allBookingsToCreate.push({
-                    userId: request.userId,
-                    hotelId: request.hotelId,
-                    roomType: selection.roomType,
-                    checkInDate: request.checkInDate,
-                    checkOutDate: request.checkOutDate,
-                    totalPrice: pricePerRoom,
-                    guests: { type: request.guests.type, count: request.guests.count },
-                    status: 'pending' as const,
-                });
+            if (selection.quantity >= 3) {
+                pricePerRoom = pricePerRoom * 0.9;
             }
+
+            expectedTotalPrice += pricePerRoom * selection.quantity;
+            validatedRoomSelections.push(selection);
         }
 
-        let finalPrice = expectedTotalPrice;
-        if (request.appliedPromotions && request.appliedPromotions.length > 0) {
-            let totalDiscount = 0;
+        const bookingToCreate: Booking = {
+            userId: request.userId,
+            hotelId: request.hotelId,
+            roomSelections: validatedRoomSelections,
+            checkInDate: request.checkInDate,
+            checkOutDate: request.checkOutDate,
+            totalPrice: expectedTotalPrice,
+            guests: { type: request.guests.type, count: request.guests.count },
+            status: 'pending' as const,
+        };
 
+        let finalPrice = expectedTotalPrice;
+        let totalDiscount = 0;
+
+        if (request.appliedPromotions && request.appliedPromotions.length > 0) {
             for (const promotionId of request.appliedPromotions) {
                 const promotion = await this.promotionRepository.findById(promotionId);
                 if (promotion) {
@@ -147,29 +164,33 @@ export class CreateBookingUseCase {
             );
         }
 
-        const createdBookings = [];
+        bookingToCreate.totalPrice = Math.round(finalPrice * 100) / 100;
 
-        for (const bookingData of allBookingsToCreate) {
-            BookingValidator.validateCreate(bookingData);
-            const createdBooking = await this.bookingRepository.create(bookingData);
-            createdBookings.push(createdBooking);
-        }
+        BookingValidator.validateCreate(bookingToCreate);
+        const createdBooking = await this.bookingRepository.create(bookingToCreate);
 
         return {
-            bookings: createdBookings.map((booking) => ({
-                id: booking._id || '',
-                userId: booking.userId,
-                hotelId: booking.hotelId,
-                roomId: booking.roomType,
-                checkInDate: booking.checkInDate,
-                checkOutDate: booking.checkOutDate,
-                totalPrice: booking.totalPrice,
-                guests: booking.guests,
-                status: booking.status,
-                createdAt: booking.createdAt || new Date(),
-                updatedAt: booking.updatedAt || new Date(),
-            })),
-            totalRooms: allBookingsToCreate.length,
+            bookings: [
+                {
+                    id: createdBooking._id || '',
+                    userId: createdBooking.userId,
+                    hotelId: createdBooking.hotelId,
+                    roomId: createdBooking._id || '',
+                    roomType: createdBooking.roomSelections[0]?.roomType || 'single-1',
+                    quantity: createdBooking.roomSelections.reduce(
+                        (total, rs) => total + rs.quantity,
+                        0
+                    ),
+                    checkInDate: createdBooking.checkInDate,
+                    checkOutDate: createdBooking.checkOutDate,
+                    totalPrice: createdBooking.totalPrice,
+                    guests: createdBooking.guests,
+                    status: createdBooking.status,
+                    createdAt: createdBooking.createdAt || new Date(),
+                    updatedAt: createdBooking.updatedAt || new Date(),
+                },
+            ],
+            totalRooms: validatedRoomSelections.reduce((total, rs) => total + rs.quantity, 0),
             totalPrice: request.totalPrice,
         };
     }

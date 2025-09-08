@@ -178,8 +178,18 @@ export class RoomController {
 
     search = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const { hotelId, location, minCapacity, minPrice, maxPrice, type } =
-                req.query as Record<string, string>;
+            const {
+                hotelId,
+                location,
+                minCapacity,
+                minPrice,
+                maxPrice,
+                type,
+                amenities,
+                checkInDate,
+                checkOutDate,
+            } = req.query as Record<string, string>;
+
             const filters = {
                 hotelId,
                 location,
@@ -187,6 +197,9 @@ export class RoomController {
                 minPrice: minPrice ? Number(minPrice) : undefined,
                 maxPrice: maxPrice ? Number(maxPrice) : undefined,
                 type: type as any,
+                amenities: amenities ? amenities.split(',').map((a) => a.trim()) : undefined,
+                checkInDate: checkInDate ? new Date(checkInDate) : undefined,
+                checkOutDate: checkOutDate ? new Date(checkOutDate) : undefined,
             };
             const rooms = await this.roomService.search(filters);
             return res.status(200).json(rooms);

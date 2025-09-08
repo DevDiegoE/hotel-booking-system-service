@@ -103,6 +103,10 @@ export class RoomRepository implements IRoomRepository {
             if (filters.maxPrice !== undefined) query.basePrice.$lte = filters.maxPrice;
         }
 
+        if (filters.amenities && filters.amenities.length > 0) {
+            query.amenities = { $all: filters.amenities };
+        }
+
         if (filters.location) {
             const parts = filters.location
                 .split(',')
@@ -123,7 +127,45 @@ export class RoomRepository implements IRoomRepository {
             }
         }
 
-        const rooms = await RoomModel.find(query);
-        return rooms.map((room) => room.toObject() as Room);
+        let rooms = await RoomModel.find(query);
+
+        if (filters.checkInDate && filters.checkOutDate) {
+            const roomIds = rooms.map((r) => (r as any)._id.toString());
+
+            const overlappingBookings = await BookingModel.find({
+                roomId: { $in: roomIds },
+                status: { $ne: 'cancelled' },
+                $or: [
+                    {
+                        checkInDate: { $lt: filters.checkOutDate },
+                        checkOutDate: { $gt: filters.checkInDate },
+                    },
+                ],
+            }).select('roomId');
+
+            const bookedRoomIds = new Set(
+                overlappingBookings.map((b) => (b as any).roomId.toString())
+            );
+            rooms = rooms.filter((room) => !bookedRoomIds.has((room as any)._id.toString()));
+        }
+
+        const roomsWithHotelInfo = await Promise.all(
+            rooms.map(async (room) => {
+                const hotel = await HotelModel.findById(room.hotelId).select(
+                    'name location rating'
+                );
+                const roomObj = room.toObject() as any;
+                if (hotel) {
+                    roomObj.hotelName = hotel.name;
+                    roomObj.hotelLocation = hotel.location;
+                    roomObj.hotelRating = hotel.rating;
+                    return roomObj;
+                }
+                return null;
+            })
+        );
+
+        const validRooms = roomsWithHotelInfo.filter((room) => room !== null);
+        return validRooms;
     }
 }

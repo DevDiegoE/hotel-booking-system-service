@@ -2,7 +2,10 @@ export interface Booking {
     _id?: string;
     userId: string;
     hotelId: string;
-    roomType: 'single-1' | 'single-2' | 'single-3' | 'suite-2' | 'suite-family';
+    roomSelections: {
+        roomType: 'single-1' | 'single-2' | 'single-3' | 'suite-2' | 'suite-family';
+        quantity: number;
+    }[];
     checkInDate: Date;
     checkOutDate: Date;
     totalPrice: number;

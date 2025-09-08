@@ -1,5 +1,11 @@
 import { Room } from '../entities/room.ts';
 import { ValidationException, BusinessRuleException } from '../exceptions/DomainException.ts';
+import {
+    VALID_AMENITIES,
+    ROOM_TYPES,
+    MAX_AMENITIES_PER_ROOM,
+    MAX_ROOM_PRICE,
+} from '../../shared/constants/room-constants.ts';
 
 export class RoomValidator {
     static validateCreate(room: Room): void {
@@ -7,10 +13,7 @@ export class RoomValidator {
             throw new ValidationException('Hotel ID is required');
         }
 
-        if (
-            !room.type ||
-            !['single-1', 'single-2', 'single-3', 'suite-2', 'suite-family'].includes(room.type)
-        ) {
+        if (!room.type || !ROOM_TYPES.includes(room.type as any)) {
             throw new ValidationException('Invalid room type');
         }
 
@@ -18,54 +21,31 @@ export class RoomValidator {
             throw new ValidationException('Base price must be greater than zero');
         }
 
-        if (room.basePrice > 5000) {
-            throw new BusinessRuleException('Base price cannot exceed $5,000 per night');
+        if (room.basePrice > MAX_ROOM_PRICE) {
+            throw new BusinessRuleException(
+                `Base price cannot exceed $${MAX_ROOM_PRICE} per night`
+            );
         }
 
         if (!room.amenities || room.amenities.length === 0) {
             throw new ValidationException('At least one amenity is required');
         }
 
-        if (room.amenities.length > 20) {
-            throw new BusinessRuleException('Maximum 20 amenities allowed per room');
+        if (room.amenities.length > MAX_AMENITIES_PER_ROOM) {
+            throw new BusinessRuleException(
+                `Maximum ${MAX_AMENITIES_PER_ROOM} amenities allowed per room`
+            );
         }
 
-        // Validate amenity names
-        const validAmenities = [
-            'wifi',
-            'tv',
-            'ac',
-            'heating',
-            'kitchen',
-            'bathroom',
-            'balcony',
-            'parking',
-            'gym',
-            'pool',
-            'spa',
-            'restaurant',
-            'bar',
-            'room-service',
-            'laundry',
-            'concierge',
-            'security',
-            'elevator',
-            'accessible',
-            'pet-friendly',
-        ];
-
         for (const amenity of room.amenities) {
-            if (!validAmenities.includes(amenity.toLowerCase())) {
+            if (!VALID_AMENITIES.includes(amenity.toLowerCase() as any)) {
                 throw new ValidationException(`Invalid amenity: ${amenity}`);
             }
         }
     }
 
     static validateUpdate(room: Partial<Room>): void {
-        if (
-            room.type !== undefined &&
-            !['single-1', 'single-2', 'single-3', 'suite-2', 'suite-family'].includes(room.type)
-        ) {
+        if (room.type !== undefined && !ROOM_TYPES.includes(room.type as any)) {
             throw new ValidationException('Invalid room type');
         }
 
@@ -73,8 +53,10 @@ export class RoomValidator {
             throw new ValidationException('Base price must be greater than zero');
         }
 
-        if (room.basePrice !== undefined && room.basePrice > 5000) {
-            throw new BusinessRuleException('Base price cannot exceed $5,000 per night');
+        if (room.basePrice !== undefined && room.basePrice > MAX_ROOM_PRICE) {
+            throw new BusinessRuleException(
+                `Base price cannot exceed $${MAX_ROOM_PRICE} per night`
+            );
         }
 
         if (room.amenities !== undefined) {
@@ -82,35 +64,14 @@ export class RoomValidator {
                 throw new ValidationException('At least one amenity is required');
             }
 
-            if (room.amenities.length > 20) {
-                throw new BusinessRuleException('Maximum 20 amenities allowed per room');
+            if (room.amenities.length > MAX_AMENITIES_PER_ROOM) {
+                throw new BusinessRuleException(
+                    `Maximum ${MAX_AMENITIES_PER_ROOM} amenities allowed per room`
+                );
             }
 
-            const validAmenities = [
-                'wifi',
-                'tv',
-                'ac',
-                'heating',
-                'kitchen',
-                'bathroom',
-                'balcony',
-                'parking',
-                'gym',
-                'pool',
-                'spa',
-                'restaurant',
-                'bar',
-                'room-service',
-                'laundry',
-                'concierge',
-                'security',
-                'elevator',
-                'accessible',
-                'pet-friendly',
-            ];
-
             for (const amenity of room.amenities) {
-                if (!validAmenities.includes(amenity.toLowerCase())) {
+                if (!VALID_AMENITIES.includes(amenity.toLowerCase() as any)) {
                     throw new ValidationException(`Invalid amenity: ${amenity}`);
                 }
             }

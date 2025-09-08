@@ -11,9 +11,21 @@ export class BookingValidator {
             throw new ValidationException('Hotel ID is required');
         }
 
-        if (!booking.roomType || booking.roomType.trim().length === 0) {
-            throw new ValidationException('Room type is required');
+        if (!booking.roomSelections || booking.roomSelections.length === 0) {
+            throw new ValidationException('Room selections are required');
         }
+
+        booking.roomSelections.forEach((selection, index) => {
+            if (!selection.roomType || selection.roomType.trim().length === 0) {
+                throw new ValidationException(`Room type is required for selection ${index + 1}`);
+            }
+
+            if (!selection.quantity || selection.quantity < 1) {
+                throw new ValidationException(
+                    `Quantity must be at least 1 for selection ${index + 1}`
+                );
+            }
+        });
 
         if (!booking.checkInDate) {
             throw new ValidationException('Check-in date is required');

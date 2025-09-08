@@ -8,6 +8,9 @@ export interface RoomSearchFilters {
     minPrice?: number;
     maxPrice?: number;
     type?: Room['type'];
+    amenities?: string[];
+    checkInDate?: Date;
+    checkOutDate?: Date;
 }
 
 export interface IRoomRepository extends ICrudRepository<Room> {

@@ -21,6 +21,9 @@ bookingRoutes.put(
 bookingRoutes.delete('/:id', authMiddleware, bookingController.deleteById);
 
 bookingRoutes.get('/user/:userId', bookingController.getByUserId);
+bookingRoutes.get('/user/:userId/details', bookingController.getUserBookingsWithDetails);
+bookingRoutes.get('/:id/can-cancel', bookingController.canCancelBooking);
+bookingRoutes.patch('/:id/cancel', authMiddleware, bookingController.cancelBooking);
 bookingRoutes.get('/hotel/:hotelId', bookingController.getByHotelId);
 bookingRoutes.get('/room-type/:roomType', bookingController.getByRoomType);
 bookingRoutes.get('/status/:status', bookingController.getByStatus);

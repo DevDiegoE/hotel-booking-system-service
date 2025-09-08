@@ -105,14 +105,19 @@ export class BookingController {
                 return res.status(400).json({ message: 'Invalid booking ID format' });
             }
 
-            await this.bookingService.deleteById(id);
-            return res.status(204).send();
+            const result = await this.bookingService.cancelBookingById(id);
+            return res.status(200).json(result);
         } catch (error) {
             if (error instanceof ValidationException) {
                 return res.status(400).json({ message: 'Validation Error', error: error.message });
             }
             if (error instanceof NotFoundException) {
                 return res.status(404).json({ message: 'Not Found', error: error.message });
+            }
+            if (error instanceof BusinessRuleException) {
+                return res
+                    .status(400)
+                    .json({ message: 'Cancellation not allowed', error: error.message });
             }
             return res
                 .status(500)
@@ -207,6 +212,58 @@ export class BookingController {
 
             return res.status(200).json(availability);
         } catch (error) {
+            return res
+                .status(500)
+                .json({ message: 'Internal Server Error', error: (error as Error).message });
+        }
+    };
+
+    getUserBookingsWithDetails = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            const { userId } = req.params;
+            const bookings = await this.bookingService.getUserBookingsWithDetails(userId);
+            return res.status(200).json(bookings);
+        } catch (error) {
+            return res
+                .status(500)
+                .json({ message: 'Internal Server Error', error: (error as Error).message });
+        }
+    };
+
+    canCancelBooking = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            const { id } = req.params;
+            const result = await this.bookingService.canCancelBooking(id);
+            return res.status(200).json(result);
+        } catch (error) {
+            return res
+                .status(500)
+                .json({ message: 'Internal Server Error', error: (error as Error).message });
+        }
+    };
+
+    cancelBooking = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            const id = req.params.id;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({ message: 'Invalid booking ID format' });
+            }
+
+            const result = await this.bookingService.cancelBookingById(id);
+            return res.status(200).json(result);
+        } catch (error) {
+            if (error instanceof ValidationException) {
+                return res.status(400).json({ message: 'Validation Error', error: error.message });
+            }
+            if (error instanceof NotFoundException) {
+                return res.status(404).json({ message: 'Not Found', error: error.message });
+            }
+            if (error instanceof BusinessRuleException) {
+                return res
+                    .status(400)
+                    .json({ message: 'Cancellation not allowed', error: error.message });
+            }
             return res
                 .status(500)
                 .json({ message: 'Internal Server Error', error: (error as Error).message });
