@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 
 import { IBookingRepository } from '../../domain/repositories/IBookingRepository.ts';
+import { IRoomRepository } from '../../domain/repositories/IRoomRepository.ts';
 import { Booking } from '../../domain/entities/booking.ts';
 import {
     ValidationException,
@@ -15,6 +16,7 @@ import { UpdateBookingUseCase } from '../../domain/use-cases/UpdateBookingUseCas
 export class BookingService {
     constructor(
         @inject('BookingRepository') private readonly bookingRepository: IBookingRepository,
+        @inject('RoomRepository') private readonly roomRepository: IRoomRepository,
         @inject(CreateBookingUseCase) private readonly createBookingUseCase: CreateBookingUseCase,
         @inject(UpdateBookingUseCase) private readonly updateBookingUseCase: UpdateBookingUseCase
     ) {}
@@ -70,11 +72,11 @@ export class BookingService {
         return this.bookingRepository.findByHotelId(hotelId);
     }
 
-    async findByRoomId(roomId: string): Promise<Booking[]> {
-        if (!roomId || roomId.trim().length === 0) {
-            throw new ValidationException('Room ID is required');
+    async findByRoomType(roomType: string): Promise<Booking[]> {
+        if (!roomType || roomType.trim().length === 0) {
+            throw new ValidationException('Room type is required');
         }
-        return this.bookingRepository.findByRoomId(roomId);
+        return this.bookingRepository.findByRoomType(roomType);
     }
 
     async findByStatus(status: string): Promise<Booking[]> {
@@ -92,5 +94,44 @@ export class BookingService {
             throw new BusinessRuleException('Check-out date must be after check-in date');
         }
         return this.bookingRepository.findByDateRange(checkInDate, checkOutDate);
+    }
+
+    async checkRoomAvailability(
+        hotelId: string,
+        checkInDate: Date,
+        checkOutDate: Date
+    ): Promise<{ [roomType: string]: number }> {
+        if (!hotelId || hotelId.trim().length === 0) {
+            throw new ValidationException('Hotel ID is required');
+        }
+        if (!checkInDate || !checkOutDate) {
+            throw new ValidationException('Check-in and check-out dates are required');
+        }
+        if (checkInDate >= checkOutDate) {
+            throw new BusinessRuleException('Check-out date must be after check-in date');
+        }
+
+        // Obtener todas las habitaciones del hotel
+        const allRoomTypes = await this.roomRepository.findByHotelId(hotelId);
+
+        const conflictingBookings = await this.bookingRepository.findByDateRange(
+            checkInDate,
+            checkOutDate
+        );
+
+        const availability: { [roomType: string]: number } = {};
+
+        allRoomTypes.forEach((roomType) => {
+            const occupiedCount = conflictingBookings.filter(
+                (b) =>
+                    b.status !== 'cancelled' &&
+                    b.roomType === roomType.type &&
+                    b.hotelId === hotelId
+            ).length;
+
+            availability[roomType.type] = Math.max(0, roomType.totalRooms - occupiedCount);
+        });
+
+        return availability;
     }
 }

@@ -3,7 +3,11 @@ import { inject, injectable } from 'tsyringe';
 import mongoose from 'mongoose';
 
 import { BookingService } from '../../../application/services/bookingService.ts';
-import { ValidationException, NotFoundException, BusinessRuleException } from '../../../domain/exceptions/DomainException.ts';
+import {
+    ValidationException,
+    NotFoundException,
+    BusinessRuleException,
+} from '../../../domain/exceptions/DomainException.ts';
 
 @injectable()
 export class BookingController {
@@ -18,7 +22,9 @@ export class BookingController {
                 return res.status(400).json({ message: 'Validation Error', error: error.message });
             }
             if (error instanceof BusinessRuleException) {
-                return res.status(400).json({ message: 'Business Rule Violation', error: error.message });
+                return res
+                    .status(400)
+                    .json({ message: 'Business Rule Violation', error: error.message });
             }
             return res
                 .status(500)
@@ -81,7 +87,9 @@ export class BookingController {
                 return res.status(404).json({ message: 'Not Found', error: error.message });
             }
             if (error instanceof BusinessRuleException) {
-                return res.status(400).json({ message: 'Business Rule Violation', error: error.message });
+                return res
+                    .status(400)
+                    .json({ message: 'Business Rule Violation', error: error.message });
             }
             return res
                 .status(500)
@@ -134,9 +142,9 @@ export class BookingController {
         }
     };
 
-    getByRoomId = async (req: Request, res: Response): Promise<Response> => {
+    getByRoomType = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const bookings = await this.bookingService.findByRoomId(req.params.roomId);
+            const bookings = await this.bookingService.findByRoomType(req.params.roomType);
             return res.status(200).json(bookings);
         } catch (error) {
             return res
@@ -174,6 +182,31 @@ export class BookingController {
             if (error instanceof ValidationException || error instanceof BusinessRuleException) {
                 return res.status(400).json({ message: 'Validation Error', error: error.message });
             }
+            return res
+                .status(500)
+                .json({ message: 'Internal Server Error', error: (error as Error).message });
+        }
+    };
+
+    checkAvailability = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            const { hotelId } = req.params;
+            const { checkInDate, checkOutDate } = req.query;
+
+            if (!checkInDate || !checkOutDate) {
+                return res
+                    .status(400)
+                    .json({ message: 'Check-in and check-out dates are required' });
+            }
+
+            const availability = await this.bookingService.checkRoomAvailability(
+                hotelId,
+                new Date(checkInDate as string),
+                new Date(checkOutDate as string)
+            );
+
+            return res.status(200).json(availability);
+        } catch (error) {
             return res
                 .status(500)
                 .json({ message: 'Internal Server Error', error: (error as Error).message });

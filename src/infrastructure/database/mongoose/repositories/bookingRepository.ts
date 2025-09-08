@@ -40,8 +40,8 @@ export class BookingRepository implements IBookingRepository {
         return bookings.map((booking) => booking.toObject() as Booking);
     }
 
-    async findByRoomId(roomId: string): Promise<Booking[]> {
-        const bookings = await BookingModel.find({ roomId });
+    async findByRoomType(roomType: string): Promise<Booking[]> {
+        const bookings = await BookingModel.find({ roomType });
         return bookings.map((booking) => booking.toObject() as Booking);
     }
 
@@ -52,8 +52,12 @@ export class BookingRepository implements IBookingRepository {
 
     async findByDateRange(checkInDate: Date, checkOutDate: Date): Promise<Booking[]> {
         const bookings = await BookingModel.find({
-            checkInDate: { $gte: checkInDate },
-            checkOutDate: { $lte: checkOutDate },
+            $or: [
+                {
+                    checkInDate: { $lt: checkOutDate },
+                    checkOutDate: { $gt: checkInDate },
+                },
+            ],
         });
         return bookings.map((booking) => booking.toObject() as Booking);
     }

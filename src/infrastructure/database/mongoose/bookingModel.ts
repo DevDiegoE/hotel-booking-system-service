@@ -7,7 +7,11 @@ const bookingSchema = new Schema<BookingDocument>(
     {
         userId: { type: String, required: true },
         hotelId: { type: String, required: true, ref: 'Hotel' },
-        roomId: { type: String, required: true, ref: 'Room' },
+        roomType: {
+            type: String,
+            required: true,
+            enum: ['single-1', 'single-2', 'single-3', 'suite-2', 'suite-family'],
+        },
         checkInDate: { type: Date, required: true },
         checkOutDate: { type: Date, required: true },
         totalPrice: { type: Number, required: true },

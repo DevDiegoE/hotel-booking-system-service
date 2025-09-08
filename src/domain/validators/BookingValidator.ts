@@ -11,8 +11,8 @@ export class BookingValidator {
             throw new ValidationException('Hotel ID is required');
         }
 
-        if (!booking.roomId || booking.roomId.trim().length === 0) {
-            throw new ValidationException('Room ID is required');
+        if (!booking.roomType || booking.roomType.trim().length === 0) {
+            throw new ValidationException('Room type is required');
         }
 
         if (!booking.checkInDate) {

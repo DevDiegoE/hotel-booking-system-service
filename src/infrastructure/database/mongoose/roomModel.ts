@@ -14,6 +14,7 @@ const roomSchema = new Schema<RoomDocument>(
         basePrice: { type: Number, required: true },
         amenities: { type: [String], default: [] },
         capacity: { type: Number, required: true, min: 1 },
+        totalRooms: { type: Number, required: true, min: 1 },
     },
     {
         timestamps: true,
