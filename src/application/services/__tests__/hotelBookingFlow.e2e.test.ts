@@ -171,4 +171,123 @@ describe('hotel booking e2e flow', () => {
             bookingService.checkRoomAvailability('hotel-1', checkInDate, checkOutDate)
         ).resolves.toEqual({ 'suite-2': 1 });
     });
+
+    it('validates guest booking edits against status, dates, and availability', async () => {
+        const bookingRepository = new InMemoryBookingRepository();
+        const hotelRepository = {
+            findById: jest.fn().mockResolvedValue({
+                _id: 'hotel-1',
+                name: 'Jala Suites',
+                location: 'Cochabamba',
+            }),
+        };
+        const roomRepository = {
+            findByHotelId: jest.fn().mockResolvedValue([
+                {
+                    _id: 'room-type-1',
+                    hotelId: 'hotel-1',
+                    type: 'suite-2',
+                    basePrice: 150,
+                    amenities: ['wifi', 'breakfast'],
+                    capacity: 2,
+                    totalRooms: 1,
+                },
+            ]),
+            findByTypeAndHotelId: jest.fn().mockResolvedValue([
+                {
+                    _id: 'room-type-1',
+                    hotelId: 'hotel-1',
+                    type: 'suite-2',
+                    basePrice: 150,
+                    amenities: ['wifi', 'breakfast'],
+                    capacity: 2,
+                    totalRooms: 1,
+                },
+            ]),
+            findById: jest.fn(),
+        };
+        const promotionRepository = {
+            findById: jest.fn(),
+        };
+
+        const createBookingUseCase = new CreateBookingUseCase(
+            bookingRepository as any,
+            hotelRepository as any,
+            roomRepository as any,
+            promotionRepository as any
+        );
+        const updateBookingUseCase = new UpdateBookingUseCase(
+            bookingRepository as any,
+            hotelRepository as any,
+            roomRepository as any
+        );
+        const bookingService = new BookingService(
+            bookingRepository as any,
+            roomRepository as any,
+            hotelRepository as any,
+            createBookingUseCase,
+            updateBookingUseCase
+        );
+
+        const firstStay = await bookingService.create({
+            userId: 'user-1',
+            hotelId: 'hotel-1',
+            roomSelections: [{ roomType: 'suite-2', quantity: 1 }],
+            checkInDate: futureDate(10),
+            checkOutDate: futureDate(12),
+            totalPrice: 300,
+            guests: { type: 'adult', count: 2 },
+            status: 'pending',
+        });
+        const secondStay = await bookingService.create({
+            userId: 'user-2',
+            hotelId: 'hotel-1',
+            roomSelections: [{ roomType: 'suite-2', quantity: 1 }],
+            checkInDate: futureDate(20),
+            checkOutDate: futureDate(22),
+            totalPrice: 300,
+            guests: { type: 'adult', count: 2 },
+            status: 'pending',
+        });
+
+        const firstBookingId = (firstStay as any).bookings[0].id;
+        const secondBookingId = (secondStay as any).bookings[0].id;
+
+        await expect(
+            bookingService.updateGuestBooking(firstBookingId, {
+                checkInDate: futureDate(20),
+                checkOutDate: futureDate(22),
+                guests: { type: 'adult', count: 2 },
+            })
+        ).rejects.toThrow('Only 0 rooms of type suite-2 available');
+
+        await expect(
+            bookingService.updateGuestBooking(firstBookingId, {
+                checkInDate: futureDate(15),
+                checkOutDate: futureDate(14),
+                guests: { type: 'adult', count: 2 },
+            })
+        ).rejects.toThrow('Check-out date must be after check-in date');
+
+        await bookingService.cancelBookingById(secondBookingId);
+        await expect(
+            bookingService.updateGuestBooking(secondBookingId, {
+                checkInDate: futureDate(24),
+                checkOutDate: futureDate(26),
+                guests: { type: 'adult', count: 2 },
+            })
+        ).rejects.toThrow('Cannot edit a booking with status cancelled');
+
+        await expect(
+            bookingService.updateGuestBooking(firstBookingId, {
+                checkInDate: futureDate(15),
+                checkOutDate: futureDate(17),
+                guests: { type: 'adult', count: 3 },
+            })
+        ).resolves.toMatchObject({
+            _id: firstBookingId,
+            totalPrice: 300,
+            guests: { type: 'adult', count: 3 },
+        });
+    });
 });

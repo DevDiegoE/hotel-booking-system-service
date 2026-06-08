@@ -85,8 +85,10 @@ export class BookingService {
             );
         }
 
-        const checkInDate = data.checkInDate ?? existing.checkInDate;
-        const checkOutDate = data.checkOutDate ?? existing.checkOutDate;
+        const checkInDate = this.normalizeDate(data.checkInDate ?? existing.checkInDate);
+        const checkOutDate = this.normalizeDate(data.checkOutDate ?? existing.checkOutDate);
+        this.validateEditableStayDates(checkInDate, checkOutDate);
+
         const totalPrice = await this.calculateTotalPrice(
             existing.hotelId,
             existing.roomSelections,
@@ -377,5 +379,32 @@ export class BookingService {
         }
 
         return Math.round(totalPrice * 100) / 100;
+    }
+
+    private normalizeDate(date: Date | string): Date {
+        const normalized = date instanceof Date ? new Date(date) : new Date(date);
+        if (Number.isNaN(normalized.getTime())) {
+            throw new ValidationException('Invalid booking date');
+        }
+        normalized.setHours(0, 0, 0, 0);
+        return normalized;
+    }
+
+    private validateEditableStayDates(checkInDate: Date, checkOutDate: Date): void {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (checkInDate < today) {
+            throw new BusinessRuleException('Check-in date cannot be in the past');
+        }
+
+        if (checkInDate >= checkOutDate) {
+            throw new BusinessRuleException('Check-out date must be after check-in date');
+        }
+
+        const maxStayDuration = 30 * 24 * 60 * 60 * 1000;
+        if (checkOutDate.getTime() - checkInDate.getTime() > maxStayDuration) {
+            throw new BusinessRuleException('Maximum stay duration is 30 days');
+        }
     }
 }

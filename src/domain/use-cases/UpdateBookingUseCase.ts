@@ -41,8 +41,12 @@ export class UpdateBookingUseCase {
 
         BookingValidator.validateUpdate(data);
 
-        const checkIn = data.checkInDate ?? existing.checkInDate;
-        const checkOut = data.checkOutDate ?? existing.checkOutDate;
+        const checkIn = this.normalizeDate(data.checkInDate ?? existing.checkInDate);
+        const checkOut = this.normalizeDate(data.checkOutDate ?? existing.checkOutDate);
+        if (checkIn >= checkOut) {
+            throw new BusinessRuleException('Check-out date must be after check-in date');
+        }
+
         const targetHotelId = data.hotelId ?? existing.hotelId;
         const targetSelections = data.roomSelections ?? existing.roomSelections;
 
@@ -83,6 +87,23 @@ export class UpdateBookingUseCase {
             }
         }
 
-        return this.bookingRepository.update(id, data);
+        const updateData = { ...data };
+        if (data.checkInDate) {
+            updateData.checkInDate = checkIn;
+        }
+        if (data.checkOutDate) {
+            updateData.checkOutDate = checkOut;
+        }
+
+        return this.bookingRepository.update(id, updateData);
+    }
+
+    private normalizeDate(date: Date | string): Date {
+        const normalized = date instanceof Date ? new Date(date) : new Date(date);
+        if (Number.isNaN(normalized.getTime())) {
+            throw new ValidationException('Invalid booking date');
+        }
+        normalized.setHours(0, 0, 0, 0);
+        return normalized;
     }
 }

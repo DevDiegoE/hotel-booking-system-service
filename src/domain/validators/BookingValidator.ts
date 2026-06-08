@@ -74,6 +74,16 @@ export class BookingValidator {
     }
 
     static validateUpdate(booking: Partial<Booking>): void {
+        if (booking.checkInDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const checkInDate = new Date(booking.checkInDate);
+            checkInDate.setHours(0, 0, 0, 0);
+            if (checkInDate < today) {
+                throw new BusinessRuleException('Check-in date cannot be in the past');
+            }
+        }
+
         if (booking.checkInDate && booking.checkOutDate) {
             if (booking.checkInDate >= booking.checkOutDate) {
                 throw new BusinessRuleException('Check-out date must be after check-in date');
@@ -86,6 +96,14 @@ export class BookingValidator {
 
         if (booking.totalPrice !== undefined && booking.totalPrice > 10000) {
             throw new BusinessRuleException('Total price cannot exceed $10,000');
+        }
+
+        if (
+            booking.guests &&
+            typeof booking.guests.count === 'number' &&
+            booking.guests.count <= 0
+        ) {
+            throw new ValidationException('At least one guest is required');
         }
 
         if (
