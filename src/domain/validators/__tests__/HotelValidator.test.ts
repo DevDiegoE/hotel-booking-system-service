@@ -1,5 +1,5 @@
 import { HotelValidator } from '../HotelValidator.ts';
-import { ValidationException, BusinessRuleException } from '../../exceptions/DomainException.ts';
+import { ValidationException } from '../../exceptions/DomainException.ts';
 import { Hotel } from '../../entities/hotel.ts';
 
 describe('HotelValidator', () => {

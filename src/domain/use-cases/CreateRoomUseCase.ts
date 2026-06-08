@@ -11,6 +11,7 @@ export interface CreateRoomRequest {
     basePrice: number;
     amenities: string[];
     capacity: number;
+    totalRooms: number;
 }
 
 @injectable()
@@ -27,6 +28,7 @@ export class CreateRoomUseCase {
             basePrice: request.basePrice,
             amenities: request.amenities,
             capacity: request.capacity,
+            totalRooms: request.totalRooms,
         };
 
         RoomValidator.validateCreate(room);

@@ -2,7 +2,7 @@ import { Schema, model, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { User } from '../../../domain/entities/user.ts';
 
-export interface UserDocument extends User, Document {
+export interface UserDocument extends Omit<User, '_id'>, Document {
     comparePassword(password: string): Promise<boolean>;
 }
 

@@ -1,7 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 import { Room } from '../../../domain/entities/room.ts';
 
-export interface RoomDocument extends Room, Document {}
+export interface RoomDocument extends Omit<Room, '_id'>, Document {}
 
 const roomSchema = new Schema<RoomDocument>(
     {

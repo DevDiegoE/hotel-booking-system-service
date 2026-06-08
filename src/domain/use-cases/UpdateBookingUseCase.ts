@@ -9,7 +9,6 @@ import {
     BusinessRuleException,
     ValidationException,
 } from '../exceptions/DomainException.ts';
-import { Room } from '../entities/room.ts';
 
 export interface UpdateBookingRequest {
     id: string;
@@ -40,31 +39,47 @@ export class UpdateBookingUseCase {
             if (!hotel) throw new NotFoundException('Hotel', data.hotelId);
         }
 
-        if (data.roomId) {
-            const room = (await this.roomRepository.findById(data.roomId)) as Room | null;
-            if (!room) throw new NotFoundException('Room', data.roomId);
-            const targetHotelId = data.hotelId ?? existing.hotelId;
-            if (room.hotelId !== targetHotelId) {
-                throw new BusinessRuleException('Room does not belong to the specified hotel');
-            }
-        }
-
         BookingValidator.validateUpdate(data);
 
-        const roomIdToCheck = data.roomId ?? existing.roomId;
         const checkIn = data.checkInDate ?? existing.checkInDate;
         const checkOut = data.checkOutDate ?? existing.checkOutDate;
+        const targetHotelId = data.hotelId ?? existing.hotelId;
+        const targetSelections = data.roomSelections ?? existing.roomSelections;
 
-        if (roomIdToCheck && checkIn && checkOut) {
+        if (targetSelections?.length && checkIn && checkOut) {
+            const hotelRooms = await this.roomRepository.findByHotelId(targetHotelId);
             const overlapping = await this.bookingRepository.findByDateRange(checkIn, checkOut);
-            const others = overlapping.filter(
-                (b) =>
-                    b.roomId === roomIdToCheck &&
-                    b.status !== 'cancelled' &&
-                    (b as any)._id?.toString() !== (existing as any)._id?.toString()
-            );
-            if (others.length > 0) {
-                throw new BusinessRuleException('Room is not available for the selected dates');
+
+            for (const selection of targetSelections) {
+                const roomType = hotelRooms.find((room) => room.type === selection.roomType);
+                if (!roomType) {
+                    throw new BusinessRuleException(
+                        `No rooms of type ${selection.roomType} available in this hotel`
+                    );
+                }
+
+                const occupiedCount = overlapping
+                    .filter(
+                        (booking) =>
+                            booking.status !== 'cancelled' &&
+                            booking.hotelId === targetHotelId &&
+                            booking._id?.toString() !== existing._id?.toString()
+                    )
+                    .reduce((total, booking) => {
+                        const matchedSelection = booking.roomSelections.find(
+                            (roomSelection) => roomSelection.roomType === selection.roomType
+                        );
+                        return total + (matchedSelection?.quantity || 0);
+                    }, 0);
+
+                if (roomType.totalRooms - occupiedCount < selection.quantity) {
+                    throw new BusinessRuleException(
+                        `Only ${Math.max(
+                            0,
+                            roomType.totalRooms - occupiedCount
+                        )} rooms of type ${selection.roomType} available for the selected dates.`
+                    );
+                }
             }
         }
 

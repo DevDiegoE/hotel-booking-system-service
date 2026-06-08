@@ -30,6 +30,6 @@ export class UserRepository implements IUserRepository {
 
     async findByEmail(email: string): Promise<User | null> {
         const user = await UserModel.findOne({ email });
-        return user ? user.toObject() : null;
+        return user ? (user.toObject() as User) : null;
     }
 }

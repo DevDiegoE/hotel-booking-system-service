@@ -17,6 +17,7 @@ import { roomRoutes } from './infrastructure/express/routes/roomRoutes.ts';
 import { bookingRoutes } from './infrastructure/express/routes/bookingRoutes.ts';
 import { promotionRoutes } from './infrastructure/express/routes/promotionRoutes.ts';
 import { authRoutes } from './infrastructure/express/routes/authRoutes.ts'
+import { operationsRoutes } from './infrastructure/express/routes/operationsRoutes.ts';
 
 
 dotenv.config();
@@ -42,6 +43,7 @@ routes.use('/hotels', hotelRoutes);
 routes.use('/rooms', roomRoutes);
 routes.use('/bookings', bookingRoutes);
 routes.use('/promotions', promotionRoutes);
+routes.use('/operations', operationsRoutes);
 
 app.use(API_PREFIX, routes);
 

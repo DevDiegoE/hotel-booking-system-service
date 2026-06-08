@@ -9,8 +9,8 @@ export class AuthController {
 
     register = async (req: Request, res: Response) => {
         try {
-            const user = await this.authService.register(req.body);
-            res.status(201).json(user);
+            const session = await this.authService.register(req.body);
+            res.status(201).json(session);
         } catch (err) {
             res.status(400).json({ message: 'Registration failed', error: (err as Error).message });
         }
@@ -19,10 +19,10 @@ export class AuthController {
     login = async (req: Request, res: Response) => {
         try {
             const { email, password } = req.body;
-            const token = await this.authService.login(email, password);
-            if (!token) return res.status(401).json({ message: 'Invalid credentials' });
+            const session = await this.authService.login(email, password);
+            if (!session) return res.status(401).json({ message: 'Invalid credentials' });
 
-            res.status(200).json({ token });
+            res.status(200).json(session);
         } catch (err) {
             res.status(500).json({ message: 'Login failed', error: (err as Error).message });
         }

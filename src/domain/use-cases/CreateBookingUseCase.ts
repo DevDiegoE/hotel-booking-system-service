@@ -39,7 +39,7 @@ export interface CreateBookingResponse {
             type: 'adult' | 'child';
             count: number;
         };
-        status: 'pending' | 'confirmed' | 'cancelled';
+        status: 'pending' | 'confirmed' | 'cancelled' | 'checked-in' | 'completed' | 'no-show';
         createdAt: Date;
         updatedAt: Date;
     }[];
@@ -158,13 +158,13 @@ export class CreateBookingUseCase {
             finalPrice = Math.max(0, expectedTotalPrice - totalDiscount);
         }
 
-        if (Math.abs(request.totalPrice - finalPrice) > 1) {
+        if (request.totalPrice + 1 < finalPrice) {
             throw new BusinessRuleException(
-                `Total price should be ${finalPrice} (base: ${expectedTotalPrice}). You provided ${request.totalPrice}.`
+                `Total price cannot be lower than ${finalPrice} (base: ${expectedTotalPrice}). You provided ${request.totalPrice}.`
             );
         }
 
-        bookingToCreate.totalPrice = Math.round(finalPrice * 100) / 100;
+        bookingToCreate.totalPrice = Math.round(request.totalPrice * 100) / 100;
 
         BookingValidator.validateCreate(bookingToCreate);
         const createdBooking = await this.bookingRepository.create(bookingToCreate);

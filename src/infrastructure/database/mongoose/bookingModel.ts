@@ -1,7 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 import { Booking } from '../../../domain/entities/booking.ts';
 
-export interface BookingDocument extends Booking, Document {}
+export interface BookingDocument extends Omit<Booking, '_id'>, Document {}
 
 const bookingSchema = new Schema<BookingDocument>(
     {
@@ -29,9 +29,24 @@ const bookingSchema = new Schema<BookingDocument>(
         },
         status: {
             type: String,
-            enum: ['pending', 'confirmed', 'cancelled'],
+            enum: ['pending', 'confirmed', 'cancelled', 'checked-in', 'completed', 'no-show'],
             default: 'pending',
         },
+        assignedRoomIds: { type: [String], default: [] },
+        paymentStatus: {
+            type: String,
+            enum: ['unpaid', 'partial', 'paid', 'refunded'],
+            default: 'unpaid',
+        },
+        source: {
+            type: String,
+            enum: ['direct', 'walk-in', 'booking.com', 'expedia', 'airbnb', 'other'],
+            default: 'direct',
+        },
+        guestProfileId: { type: String },
+        ratePlanId: { type: String },
+        checkInAt: { type: Date },
+        checkOutAt: { type: Date },
     },
     {
         timestamps: true,

@@ -4,7 +4,7 @@ import { UserModel } from '../src/infrastructure/database/mongoose/userModel.ts'
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET as string,
+    secretOrKey: process.env.JWT_SECRET || 'development-secret',
 };
 
 passport.use(

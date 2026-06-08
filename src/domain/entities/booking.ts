@@ -13,7 +13,14 @@ export interface Booking {
         type: 'adult' | 'child';
         count: number;
     };
-    status: 'pending' | 'confirmed' | 'cancelled';
+    status: 'pending' | 'confirmed' | 'cancelled' | 'checked-in' | 'completed' | 'no-show';
+    assignedRoomIds?: string[];
+    paymentStatus?: 'unpaid' | 'partial' | 'paid' | 'refunded';
+    source?: 'direct' | 'walk-in' | 'booking.com' | 'expedia' | 'airbnb' | 'other';
+    guestProfileId?: string;
+    ratePlanId?: string;
+    checkInAt?: Date;
+    checkOutAt?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }

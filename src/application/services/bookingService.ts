@@ -66,6 +66,42 @@ export class BookingService {
         }) as unknown as Promise<Booking | null>;
     }
 
+    async updateGuestBooking(
+        id: string,
+        data: Pick<Partial<Booking>, 'checkInDate' | 'checkOutDate' | 'guests'>
+    ): Promise<Booking | null> {
+        if (!id || id.trim().length === 0) {
+            throw new ValidationException('Booking ID is required');
+        }
+
+        const existing = await this.bookingRepository.findById(id);
+        if (!existing) {
+            throw new NotFoundException('Booking', id);
+        }
+
+        if (!['pending', 'confirmed'].includes(existing.status)) {
+            throw new BusinessRuleException(
+                `Cannot edit a booking with status ${existing.status}`
+            );
+        }
+
+        const checkInDate = data.checkInDate ?? existing.checkInDate;
+        const checkOutDate = data.checkOutDate ?? existing.checkOutDate;
+        const totalPrice = await this.calculateTotalPrice(
+            existing.hotelId,
+            existing.roomSelections,
+            checkInDate,
+            checkOutDate
+        );
+
+        return this.updateById(id, {
+            checkInDate,
+            checkOutDate,
+            guests: data.guests ?? existing.guests,
+            totalPrice,
+        });
+    }
+
     async deleteById(id: string): Promise<void> {
         if (!id || id.trim().length === 0) {
             throw new ValidationException('Booking ID is required');
@@ -285,6 +321,13 @@ export class BookingService {
             return { canCancel: false, reason: 'Booking is already cancelled' };
         }
 
+        if (['checked-in', 'completed', 'no-show'].includes(booking.status)) {
+            return {
+                canCancel: false,
+                reason: `Cannot cancel a booking with status ${booking.status}`,
+            };
+        }
+
         const now = new Date();
         const checkInDate = new Date(booking.checkInDate);
         const hoursUntilCheckIn = (checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -297,5 +340,42 @@ export class BookingService {
         }
 
         return { canCancel: true };
+    }
+
+    private async calculateTotalPrice(
+        hotelId: string,
+        roomSelections: Booking['roomSelections'],
+        checkInDate: Date,
+        checkOutDate: Date
+    ): Promise<number> {
+        if (checkInDate >= checkOutDate) {
+            throw new BusinessRuleException('Check-out date must be after check-in date');
+        }
+
+        const days = Math.ceil(
+            (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        let totalPrice = 0;
+
+        for (const selection of roomSelections) {
+            const roomTypes = await this.roomRepository.findByTypeAndHotelId(
+                selection.roomType,
+                hotelId
+            );
+            const roomType = roomTypes[0];
+            if (!roomType) {
+                throw new BusinessRuleException(
+                    `No rooms of type ${selection.roomType} available in this hotel`
+                );
+            }
+
+            let pricePerRoom = roomType.basePrice * days;
+            if (selection.quantity >= 3) {
+                pricePerRoom *= 0.9;
+            }
+            totalPrice += pricePerRoom * selection.quantity;
+        }
+
+        return Math.round(totalPrice * 100) / 100;
     }
 }

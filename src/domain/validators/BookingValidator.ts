@@ -96,7 +96,12 @@ export class BookingValidator {
             throw new BusinessRuleException('Maximum 10 guests allowed per booking');
         }
 
-        if (booking.status && !['pending', 'confirmed', 'cancelled'].includes(booking.status)) {
+        if (
+            booking.status &&
+            !['pending', 'confirmed', 'cancelled', 'checked-in', 'completed', 'no-show'].includes(
+                booking.status
+            )
+        ) {
             throw new ValidationException('Invalid booking status');
         }
     }

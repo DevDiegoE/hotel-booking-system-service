@@ -40,7 +40,7 @@ export class HotelRepository implements IHotelRepository {
         return hotels.map((h) => h.toObject() as Hotel);
     }
 
-    async findAvailableHotels(startDate: Date, endDate: Date): Promise<Hotel[]> {
+    async findAvailableHotels(_startDate: Date, _endDate: Date): Promise<Hotel[]> {
         const hotels = await HotelModel.find({});
         return hotels.map((h) => h.toObject() as Hotel);
     }

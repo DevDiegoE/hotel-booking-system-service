@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const bookingSchema = z.object({
-    userId: z.string().min(1, 'userId is required'),
+    userId: z.string().min(1, 'userId is required').optional(),
     hotelId: z.string().min(1, 'hotelId is required'),
     roomSelections: z
         .array(
@@ -22,5 +22,7 @@ export const bookingSchema = z.object({
 
     appliedPromotions: z.array(z.string()).optional(),
 
-    status: z.enum(['pending', 'confirmed', 'cancelled'], 'Status is required').default('pending'),
+    status: z
+        .enum(['pending', 'confirmed', 'cancelled', 'checked-in', 'completed', 'no-show'])
+        .optional(),
 });

@@ -9,13 +9,21 @@ import {
     BusinessRuleException,
 } from '../../../domain/exceptions/DomainException.ts';
 
+type AuthUser = {
+    _id?: unknown;
+    id?: string;
+    role?: string;
+};
+
 @injectable()
 export class BookingController {
     constructor(@inject(BookingService) private readonly bookingService: BookingService) {}
 
     create = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const booking = await this.bookingService.create(req.body);
+            const authUser = req.user as AuthUser | undefined;
+            const userId = this.getAuthUserId(authUser);
+            const booking = await this.bookingService.create({ ...req.body, userId });
             return res.status(201).json(booking);
         } catch (error) {
             if (error instanceof ValidationException) {
@@ -35,7 +43,13 @@ export class BookingController {
     getAll = async (_req: Request, res: Response): Promise<Response> => {
         try {
             const bookings = await this.bookingService.findAll();
-            return res.status(200).json(bookings);
+            return res.status(200).json(
+                bookings.map((booking) => ({
+                    ...booking,
+                    id: booking._id || '',
+                    canCancel: booking.status !== 'cancelled',
+                }))
+            );
         } catch (error) {
             return res
                 .status(500)
@@ -54,6 +68,9 @@ export class BookingController {
             const booking = await this.bookingService.findById(id);
             if (!booking) {
                 return res.status(404).json({ message: 'Booking not found' });
+            }
+            if (!this.canAccessBooking(req.user as AuthUser | undefined, booking.userId)) {
+                return res.status(403).json({ message: 'Insufficient permissions' });
             }
             return res.status(200).json(booking);
         } catch (error) {
@@ -74,7 +91,28 @@ export class BookingController {
                 return res.status(400).json({ message: 'Invalid booking ID format' });
             }
 
-            const updatedBooking = await this.bookingService.updateById(id, req.body);
+            const authUser = req.user as AuthUser | undefined;
+            const existing = await this.bookingService.findById(id);
+            if (!existing) {
+                return res.status(404).json({ message: 'Booking not found' });
+            }
+
+            if (!this.isAdmin(authUser) && !this.canAccessBooking(authUser, existing.userId)) {
+                return res.status(403).json({ message: 'Insufficient permissions' });
+            }
+
+            if (!this.isAdmin(authUser) && !this.hasOnlyGuestEditableFields(req.body)) {
+                return res
+                    .status(403)
+                    .json({ message: 'Guests can only edit dates and guest count' });
+            }
+
+            const updatedBooking = this.isAdmin(authUser)
+                ? await this.bookingService.updateById(id, req.body)
+                : await this.bookingService.updateGuestBooking(
+                      id,
+                      this.pickGuestEditableFields(req.body)
+                  );
             if (!updatedBooking) {
                 return res.status(404).json({ message: 'Booking not found' });
             }
@@ -105,6 +143,14 @@ export class BookingController {
                 return res.status(400).json({ message: 'Invalid booking ID format' });
             }
 
+            const booking = await this.bookingService.findById(id);
+            if (!booking) {
+                return res.status(404).json({ message: 'Booking not found' });
+            }
+            if (!this.canAccessBooking(req.user as AuthUser | undefined, booking.userId)) {
+                return res.status(403).json({ message: 'Insufficient permissions' });
+            }
+
             const result = await this.bookingService.cancelBookingById(id);
             return res.status(200).json(result);
         } catch (error) {
@@ -127,6 +173,10 @@ export class BookingController {
 
     getByUserId = async (req: Request, res: Response): Promise<Response> => {
         try {
+            if (!this.canAccessBooking(req.user as AuthUser | undefined, req.params.userId)) {
+                return res.status(403).json({ message: 'Insufficient permissions' });
+            }
+
             const bookings = await this.bookingService.findByUserId(req.params.userId);
             return res.status(200).json(bookings);
         } catch (error) {
@@ -221,6 +271,10 @@ export class BookingController {
     getUserBookingsWithDetails = async (req: Request, res: Response): Promise<Response> => {
         try {
             const { userId } = req.params;
+            if (!this.canAccessBooking(req.user as AuthUser | undefined, userId)) {
+                return res.status(403).json({ message: 'Insufficient permissions' });
+            }
+
             const bookings = await this.bookingService.getUserBookingsWithDetails(userId);
             return res.status(200).json(bookings);
         } catch (error) {
@@ -233,6 +287,14 @@ export class BookingController {
     canCancelBooking = async (req: Request, res: Response): Promise<Response> => {
         try {
             const { id } = req.params;
+            const booking = await this.bookingService.findById(id);
+            if (!booking) {
+                return res.status(404).json({ message: 'Booking not found' });
+            }
+            if (!this.canAccessBooking(req.user as AuthUser | undefined, booking.userId)) {
+                return res.status(403).json({ message: 'Insufficient permissions' });
+            }
+
             const result = await this.bookingService.canCancelBooking(id);
             return res.status(200).json(result);
         } catch (error) {
@@ -248,6 +310,14 @@ export class BookingController {
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid booking ID format' });
+            }
+
+            const booking = await this.bookingService.findById(id);
+            if (!booking) {
+                return res.status(404).json({ message: 'Booking not found' });
+            }
+            if (!this.canAccessBooking(req.user as AuthUser | undefined, booking.userId)) {
+                return res.status(403).json({ message: 'Insufficient permissions' });
             }
 
             const result = await this.bookingService.cancelBookingById(id);
@@ -269,4 +339,31 @@ export class BookingController {
                 .json({ message: 'Internal Server Error', error: (error as Error).message });
         }
     };
+
+    private getAuthUserId(user: AuthUser | undefined): string {
+        return String(user?._id || user?.id || '');
+    }
+
+    private isAdmin(user: AuthUser | undefined): boolean {
+        return user?.role === 'admin';
+    }
+
+    private canAccessBooking(user: AuthUser | undefined, bookingUserId: string): boolean {
+        return this.isAdmin(user) || this.getAuthUserId(user) === bookingUserId;
+    }
+
+    private hasOnlyGuestEditableFields(body: Record<string, unknown>): boolean {
+        const allowedFields = new Set(['checkInDate', 'checkOutDate', 'guests']);
+        return Object.entries(body)
+            .filter(([, value]) => value !== undefined)
+            .every(([field]) => allowedFields.has(field));
+    }
+
+    private pickGuestEditableFields(body: Record<string, unknown>) {
+        return {
+            checkInDate: body.checkInDate as Date | undefined,
+            checkOutDate: body.checkOutDate as Date | undefined,
+            guests: body.guests as any,
+        };
+    }
 }

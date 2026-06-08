@@ -27,6 +27,10 @@ export class RoomValidator {
             );
         }
 
+        if (!Number.isInteger(room.totalRooms) || room.totalRooms < 1) {
+            throw new ValidationException('Total rooms must be at least 1');
+        }
+
         if (!room.amenities || room.amenities.length === 0) {
             throw new ValidationException('At least one amenity is required');
         }
@@ -57,6 +61,13 @@ export class RoomValidator {
             throw new BusinessRuleException(
                 `Base price cannot exceed $${MAX_ROOM_PRICE} per night`
             );
+        }
+
+        if (
+            room.totalRooms !== undefined &&
+            (!Number.isInteger(room.totalRooms) || room.totalRooms < 1)
+        ) {
+            throw new ValidationException('Total rooms must be at least 1');
         }
 
         if (room.amenities !== undefined) {
