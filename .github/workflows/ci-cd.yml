@@ -37,6 +37,9 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Build production bundle
+        run: npm run build
+
       - name: Run tests
         run: npm test -- --runInBand
 

@@ -5,7 +5,8 @@
   "type": "module",
   "main": "app.ts",
   "scripts": {
-    "start": "tsx src/app.ts",
+    "start": "node dist/src/app.js",
+    "build": "tsc -p tsconfig.build.json",
     "dev": "tsx watch src/app.ts",
     "seed": "tsx scripts/seed.ts",
     "test": "jest",
