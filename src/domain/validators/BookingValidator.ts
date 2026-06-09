@@ -129,13 +129,12 @@ export class BookingValidator {
             throw new BusinessRuleException('Booking is already cancelled');
         }
 
-        const today = new Date();
+        const now = new Date();
         const checkInDate = new Date(booking.checkInDate);
-        const daysUntilCheckIn = Math.ceil(
-            (checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const hoursUntilCheckIn =
+            (checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-        if (daysUntilCheckIn < 1) {
+        if (hoursUntilCheckIn < 24) {
             throw new BusinessRuleException('Cannot cancel booking within 24 hours of check-in');
         }
     }
