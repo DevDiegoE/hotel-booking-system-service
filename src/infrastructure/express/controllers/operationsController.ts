@@ -24,6 +24,10 @@ type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'checked-in' | 'com
 export class OperationsController {
     private readonly paymentGateway = new PaymentGatewayService();
 
+    private param(req: Request, name: string): string {
+        return String(req.params[name] || '');
+    }
+
     listCalendar = async (req: Request, res: Response): Promise<Response> => {
         const { from, to, hotelId } = req.query;
         const query: Record<string, unknown> = {
@@ -71,17 +75,18 @@ export class OperationsController {
     };
 
     updatePhysicalRoom = async (req: Request, res: Response): Promise<Response> => {
-        const room = await PhysicalRoomModel.findByIdAndUpdate(req.params.id, req.body, {
+        const id = this.param(req, 'id');
+        const room = await PhysicalRoomModel.findByIdAndUpdate(id, req.body, {
             new: true,
             runValidators: true,
         });
         if (!room) return res.status(404).json({ message: 'Physical room not found' });
-        await this.audit(req, 'physical-room.updated', 'PhysicalRoom', req.params.id, req.body);
+        await this.audit(req, 'physical-room.updated', 'PhysicalRoom', id, req.body);
         return res.status(200).json(room);
     };
 
     assignRooms = async (req: Request, res: Response): Promise<Response> => {
-        const booking = await BookingModel.findById(req.params.bookingId);
+        const booking = await BookingModel.findById(this.param(req, 'bookingId'));
         if (!booking) return res.status(404).json({ message: 'Booking not found' });
         if (['cancelled', 'completed', 'no-show'].includes(booking.status)) {
             return res.status(400).json({ message: `Cannot assign rooms to ${booking.status} booking` });
@@ -498,8 +503,9 @@ export class OperationsController {
     };
 
     updatePayment = async (req: Request, res: Response): Promise<Response> => {
+        const id = this.param(req, 'id');
         const payment = await PaymentModel.findByIdAndUpdate(
-            req.params.id,
+            id,
             {
                 ...req.body,
                 paidAt: ['paid', 'partial'].includes(req.body.status) ? new Date() : req.body.paidAt,
@@ -508,26 +514,28 @@ export class OperationsController {
         );
         if (!payment) return res.status(404).json({ message: 'Payment not found' });
         await this.syncPaymentStatus(payment.bookingId);
-        await this.audit(req, 'payment.updated', 'Payment', req.params.id, req.body);
+        await this.audit(req, 'payment.updated', 'Payment', id, req.body);
         return res.status(200).json(payment);
     };
 
     getPolicy = async (req: Request, res: Response): Promise<Response> => {
+        const hotelId = this.param(req, 'hotelId');
         const policy = await HotelPolicyModel.findOneAndUpdate(
-            { hotelId: req.params.hotelId },
-            { $setOnInsert: { hotelId: req.params.hotelId } },
+            { hotelId },
+            { $setOnInsert: { hotelId } },
             { new: true, upsert: true }
         );
         return res.status(200).json(policy);
     };
 
     upsertPolicy = async (req: Request, res: Response): Promise<Response> => {
+        const hotelId = this.param(req, 'hotelId');
         const policy = await HotelPolicyModel.findOneAndUpdate(
-            { hotelId: req.params.hotelId },
-            { ...req.body, hotelId: req.params.hotelId },
+            { hotelId },
+            { ...req.body, hotelId },
             { new: true, upsert: true, runValidators: true }
         );
-        await this.audit(req, 'policy.updated', 'HotelPolicy', req.params.hotelId, req.body);
+        await this.audit(req, 'policy.updated', 'HotelPolicy', hotelId, req.body);
         return res.status(200).json(policy);
     };
 
@@ -565,7 +573,7 @@ export class OperationsController {
     };
 
     upsertGuest = async (req: Request, res: Response): Promise<Response> => {
-        const id = req.params.id;
+        const id = this.param(req, 'id');
         const guest =
             id && mongoose.Types.ObjectId.isValid(id)
                 ? await GuestProfileModel.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
@@ -587,7 +595,7 @@ export class OperationsController {
     };
 
     upsertRatePlan = async (req: Request, res: Response): Promise<Response> => {
-        const id = req.params.id;
+        const id = this.param(req, 'id');
         const ratePlan =
             id && mongoose.Types.ObjectId.isValid(id)
                 ? await RatePlanModel.findByIdAndUpdate(id, req.body, { new: true, runValidators: true })
@@ -609,7 +617,8 @@ export class OperationsController {
     };
 
     updateHousekeeping = async (req: Request, res: Response): Promise<Response> => {
-        const task = await HousekeepingTaskModel.findByIdAndUpdate(req.params.id, req.body, {
+        const id = this.param(req, 'id');
+        const task = await HousekeepingTaskModel.findByIdAndUpdate(id, req.body, {
             new: true,
             runValidators: true,
         });
@@ -617,7 +626,7 @@ export class OperationsController {
         if (task.status === 'done') {
             await PhysicalRoomModel.findByIdAndUpdate(task.physicalRoomId, { status: 'clean' });
         }
-        await this.audit(req, 'housekeeping.updated', 'HousekeepingTask', req.params.id, req.body);
+        await this.audit(req, 'housekeeping.updated', 'HousekeepingTask', id, req.body);
         return res.status(200).json(task);
     };
 

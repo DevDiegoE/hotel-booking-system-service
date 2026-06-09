@@ -14,6 +14,10 @@ import {
 export class HotelController {
     constructor(@inject(HotelService) private readonly hotelService: HotelService) {}
 
+    private param(req: Request, name: string): string {
+        return String(req.params[name] || '');
+    }
+
     create = async (req: Request, res: Response): Promise<Response> => {
         try {
             const hotel = await this.hotelService.create(req.body);
@@ -50,7 +54,7 @@ export class HotelController {
 
     getById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid hotel ID format' });
@@ -76,7 +80,7 @@ export class HotelController {
 
     update = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid hotel ID format' });
@@ -114,7 +118,7 @@ export class HotelController {
 
     deleteById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid hotel ID format' });

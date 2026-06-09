@@ -19,6 +19,10 @@ type AuthUser = {
 export class BookingController {
     constructor(@inject(BookingService) private readonly bookingService: BookingService) {}
 
+    private param(req: Request, name: string): string {
+        return String(req.params[name] || '');
+    }
+
     create = async (req: Request, res: Response): Promise<Response> => {
         try {
             const authUser = req.user as AuthUser | undefined;
@@ -59,7 +63,7 @@ export class BookingController {
 
     getById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid booking ID format' });
@@ -85,7 +89,7 @@ export class BookingController {
 
     update = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid booking ID format' });
@@ -137,7 +141,7 @@ export class BookingController {
 
     deleteById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid booking ID format' });
@@ -173,11 +177,12 @@ export class BookingController {
 
     getByUserId = async (req: Request, res: Response): Promise<Response> => {
         try {
-            if (!this.canAccessBooking(req.user as AuthUser | undefined, req.params.userId)) {
+            const userId = this.param(req, 'userId');
+            if (!this.canAccessBooking(req.user as AuthUser | undefined, userId)) {
                 return res.status(403).json({ message: 'Insufficient permissions' });
             }
 
-            const bookings = await this.bookingService.findByUserId(req.params.userId);
+            const bookings = await this.bookingService.findByUserId(userId);
             return res.status(200).json(bookings);
         } catch (error) {
             return res
@@ -188,7 +193,7 @@ export class BookingController {
 
     getByHotelId = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const bookings = await this.bookingService.findByHotelId(req.params.hotelId);
+            const bookings = await this.bookingService.findByHotelId(this.param(req, 'hotelId'));
             return res.status(200).json(bookings);
         } catch (error) {
             return res
@@ -199,7 +204,7 @@ export class BookingController {
 
     getByRoomType = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const bookings = await this.bookingService.findByRoomType(req.params.roomType);
+            const bookings = await this.bookingService.findByRoomType(this.param(req, 'roomType'));
             return res.status(200).json(bookings);
         } catch (error) {
             return res
@@ -210,7 +215,7 @@ export class BookingController {
 
     getByStatus = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const bookings = await this.bookingService.findByStatus(req.params.status);
+            const bookings = await this.bookingService.findByStatus(this.param(req, 'status'));
             return res.status(200).json(bookings);
         } catch (error) {
             return res
@@ -245,7 +250,7 @@ export class BookingController {
 
     checkAvailability = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const { hotelId } = req.params;
+            const hotelId = this.param(req, 'hotelId');
             const { checkInDate, checkOutDate } = req.query;
 
             if (!checkInDate || !checkOutDate) {
@@ -270,7 +275,7 @@ export class BookingController {
 
     getUserBookingsWithDetails = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const { userId } = req.params;
+            const userId = this.param(req, 'userId');
             if (!this.canAccessBooking(req.user as AuthUser | undefined, userId)) {
                 return res.status(403).json({ message: 'Insufficient permissions' });
             }
@@ -286,7 +291,7 @@ export class BookingController {
 
     canCancelBooking = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const { id } = req.params;
+            const id = this.param(req, 'id');
             const booking = await this.bookingService.findById(id);
             if (!booking) {
                 return res.status(404).json({ message: 'Booking not found' });
@@ -306,7 +311,7 @@ export class BookingController {
 
     cancelBooking = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid booking ID format' });

@@ -8,6 +8,10 @@ import { PromotionService } from '../../../application/services/promotionService
 export class PromotionController {
     constructor(@inject(PromotionService) private readonly promotionService: PromotionService) {}
 
+    private param(req: Request, name: string): string {
+        return String(req.params[name] || '');
+    }
+
     create = async (req: Request, res: Response): Promise<Response> => {
         try {
             const promotion = await this.promotionService.create(req.body);
@@ -32,7 +36,7 @@ export class PromotionController {
 
     getById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid promotion ID format' });
@@ -53,7 +57,7 @@ export class PromotionController {
     update = async (req: Request, res: Response): Promise<Response> => {
         try {
             const updatedPromotion = await this.promotionService.updateById(
-                req.params.id,
+                this.param(req, 'id'),
                 req.body
             );
             if (!updatedPromotion) {
@@ -69,7 +73,7 @@ export class PromotionController {
 
     deleteById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            await this.promotionService.deleteById(req.params.id);
+            await this.promotionService.deleteById(this.param(req, 'id'));
             return res.status(204).send();
         } catch (error) {
             return res
@@ -80,7 +84,7 @@ export class PromotionController {
 
     getByName = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const name = req.params.name;
+            const name = this.param(req, 'name');
             const promotion = await this.promotionService.findByName(name);
             if (!promotion) {
                 return res.status(404).json({ message: 'Promotion not found' });
@@ -95,7 +99,7 @@ export class PromotionController {
 
     getByType = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const type = req.params.type as 'age-discount' | 'family-discount';
+            const type = this.param(req, 'type') as 'age-discount' | 'family-discount';
             const promotions = await this.promotionService.findByType(type);
             return res.status(200).json(promotions);
         } catch (error) {

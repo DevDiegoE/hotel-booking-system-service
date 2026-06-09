@@ -11,24 +11,28 @@ import { BookingModel } from '../bookingModel.ts';
 
 @injectable()
 export class RoomRepository implements IRoomRepository {
+    private toDomain(room: { toObject: () => unknown }): Room {
+        return room.toObject() as unknown as Room;
+    }
+
     async create(room: Room): Promise<Room> {
         const created = await RoomModel.create(room);
-        return created.toObject() as Room;
+        return this.toDomain(created);
     }
 
     async findAll(): Promise<Room[]> {
         const rooms = await RoomModel.find();
-        return rooms.map((room) => room.toObject() as Room);
+        return rooms.map((room) => this.toDomain(room));
     }
 
     async findById(id: string): Promise<Room | null> {
         const room = await RoomModel.findById(id);
-        return room ? (room.toObject() as Room) : null;
+        return room ? this.toDomain(room) : null;
     }
 
     async update(id: string, room: Partial<Room>): Promise<Room | null> {
         const updated = await RoomModel.findByIdAndUpdate(id, room, { new: true });
-        return updated ? (updated.toObject() as Room) : null;
+        return updated ? this.toDomain(updated) : null;
     }
 
     async delete(id: string): Promise<void> {
@@ -37,7 +41,7 @@ export class RoomRepository implements IRoomRepository {
 
     async findByHotelId(hotelId: string): Promise<Room[]> {
         const rooms = await RoomModel.find({ hotelId });
-        return rooms.map((room) => room.toObject() as Room);
+        return rooms.map((room) => this.toDomain(room));
     }
 
     async findAvailableRooms(
@@ -59,17 +63,17 @@ export class RoomRepository implements IRoomRepository {
         const availableRooms = hotelRooms.filter(
             (room) => !bookedRoomIds.has((room as any)._id.toString())
         );
-        return availableRooms.map((room) => room.toObject() as Room);
+        return availableRooms.map((room) => this.toDomain(room));
     }
 
     async findByTypeAndHotelId(type: string, hotelId: string): Promise<Room[]> {
         const rooms = await RoomModel.find({ type, hotelId });
-        return rooms.map((room) => room.toObject() as Room);
+        return rooms.map((room) => this.toDomain(room));
     }
 
     async findByCapacity(minCapacity: number): Promise<Room[]> {
         const rooms = await RoomModel.find({ capacity: { $gte: minCapacity } });
-        return rooms.map((room) => room.toObject() as Room);
+        return rooms.map((room) => this.toDomain(room));
     }
 
     async findByPriceRange(minPrice?: number, maxPrice?: number): Promise<Room[]> {
@@ -79,7 +83,7 @@ export class RoomRepository implements IRoomRepository {
         const rooms = await RoomModel.find(
             Object.keys(priceCond).length ? { basePrice: priceCond } : {}
         );
-        return rooms.map((room) => room.toObject() as Room);
+        return rooms.map((room) => this.toDomain(room));
     }
 
     async findByHotelLocation(location: string): Promise<Room[]> {
@@ -89,7 +93,7 @@ export class RoomRepository implements IRoomRepository {
         if (hotels.length === 0) return [];
         const hotelIds = hotels.map((h) => (h as any)._id.toString());
         const rooms = await RoomModel.find({ hotelId: { $in: hotelIds } });
-        return rooms.map((room) => room.toObject() as Room);
+        return rooms.map((room) => this.toDomain(room));
     }
 
     async search(filters: RoomSearchFilters): Promise<Room[]> {

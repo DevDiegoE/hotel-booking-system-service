@@ -13,6 +13,10 @@ import {
 export class RoomController {
     constructor(@inject(RoomService) private readonly roomService: RoomService) {}
 
+    private param(req: Request, name: string): string {
+        return String(req.params[name] || '');
+    }
+
     create = async (req: Request, res: Response): Promise<Response> => {
         try {
             const room = await this.roomService.create(req.body);
@@ -45,7 +49,7 @@ export class RoomController {
 
     getById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid room ID format' });
@@ -68,7 +72,7 @@ export class RoomController {
 
     update = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid room ID format' });
@@ -99,7 +103,7 @@ export class RoomController {
 
     deleteById = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const id = req.params.id;
+            const id = this.param(req, 'id');
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: 'Invalid room ID format' });
@@ -122,7 +126,7 @@ export class RoomController {
 
     findByHotelId = async (req: Request, res: Response): Promise<Response> => {
         try {
-            const hotelId = req.params.hotelId;
+            const hotelId = this.param(req, 'hotelId');
             const rooms = await this.roomService.findByHotelId(hotelId);
             return res.status(200).json(rooms);
         } catch (error) {
@@ -141,9 +145,9 @@ export class RoomController {
             }
 
             const rooms = await this.roomService.findAvailableRooms(
-                hotelId as string,
-                new Date(checkInDate as string),
-                new Date(checkOutDate as string)
+                String(hotelId),
+                new Date(String(checkInDate)),
+                new Date(String(checkOutDate))
             );
             return res.status(200).json(rooms);
         } catch (error) {
@@ -165,8 +169,8 @@ export class RoomController {
             }
 
             const rooms = await this.roomService.findByTypeAndHotelId(
-                type as string,
-                hotelId as string
+                String(type),
+                String(hotelId)
             );
             return res.status(200).json(rooms);
         } catch (error) {
