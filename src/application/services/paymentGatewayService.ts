@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { requireStripeConfig } from '../../../config/env.ts';
 
 export type PaymentGatewayProvider = 'mock' | 'stripe';
 
@@ -28,7 +29,26 @@ export type CheckoutSessionStatusResult = {
     failureReason?: string;
 };
 
+export type PaymentWebhookPayload = {
+    providerPaymentIntentId: string;
+    status: 'paid' | 'failed';
+    transactionRef?: string;
+    failureReason?: string;
+};
+
+type StripePaymentIntentLike = {
+    id: string;
+    latest_charge?: string | { id?: string } | null;
+    last_payment_error?: {
+        message?: string;
+    } | null;
+};
+
 export class PaymentGatewayService {
+    constructor() {
+        requireStripeConfig();
+    }
+
     private readonly provider: PaymentGatewayProvider =
         process.env.PAYMENT_PROVIDER === 'stripe' && process.env.STRIPE_SECRET_KEY
             ? 'stripe'
@@ -195,6 +215,48 @@ export class PaymentGatewayService {
         return {
             paid: true,
             transactionRef: `CH_${checkoutSessionId.slice(-16)}`,
+        };
+    }
+
+    parseWebhookPayload(params: {
+        rawBody?: Buffer;
+        signature?: string;
+        body: unknown;
+    }): PaymentWebhookPayload {
+        if (this.stripe) {
+            if (!params.rawBody || !params.signature || !process.env.PAYMENT_WEBHOOK_SECRET) {
+                throw new Error('Stripe webhook signature verification is not configured');
+            }
+
+            const event = this.stripe.webhooks.constructEvent(
+                params.rawBody,
+                params.signature,
+                process.env.PAYMENT_WEBHOOK_SECRET
+            );
+
+            if (event.type !== 'payment_intent.succeeded' && event.type !== 'payment_intent.payment_failed') {
+                throw new Error(`Unsupported Stripe webhook event: ${event.type}`);
+            }
+
+            const intent = event.data.object as StripePaymentIntentLike;
+            const latestCharge =
+                typeof intent.latest_charge === 'object'
+                    ? intent.latest_charge?.id
+                    : intent.latest_charge;
+            return {
+                providerPaymentIntentId: intent.id,
+                status: event.type === 'payment_intent.succeeded' ? 'paid' : 'failed',
+                transactionRef: latestCharge || intent.id,
+                failureReason: intent.last_payment_error?.message,
+            };
+        }
+
+        const body = params.body as Record<string, unknown>;
+        return {
+            providerPaymentIntentId: String(body.providerPaymentIntentId || ''),
+            status: body.status === 'failed' ? 'failed' : 'paid',
+            transactionRef: body.transactionRef ? String(body.transactionRef) : undefined,
+            failureReason: body.failureReason ? String(body.failureReason) : undefined,
         };
     }
 }

@@ -5,6 +5,7 @@ import { UserModel } from '../../infrastructure/database/mongoose/userModel.ts';
 import { User } from '../../domain/entities/user.ts';
 import { UserService } from './userService.ts';
 import { ValidationException } from '../../domain/exceptions/DomainException.ts';
+import { getJwtSecret } from '../../../config/env.ts';
 
 export interface AuthSession {
     token: string;
@@ -59,7 +60,7 @@ export class AuthService {
                 email: user.email,
                 role,
             },
-            process.env.JWT_SECRET || 'development-secret',
+            getJwtSecret(),
             { expiresIn: '1h' }
         );
 

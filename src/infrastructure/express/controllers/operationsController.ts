@@ -411,13 +411,29 @@ export class OperationsController {
     };
 
     paymentWebhook = async (req: Request, res: Response): Promise<Response> => {
-        const signature = req.header('x-hotel-payment-signature');
-        const expectedSignature = process.env.PAYMENT_WEBHOOK_SECRET;
-        if (expectedSignature && signature !== expectedSignature) {
-            return res.status(401).json({ message: 'Invalid webhook signature' });
+        let payload;
+        try {
+            if (process.env.PAYMENT_PROVIDER !== 'stripe') {
+                const signature = req.header('x-hotel-payment-signature');
+                const expectedSignature = process.env.PAYMENT_WEBHOOK_SECRET;
+                if (expectedSignature && signature !== expectedSignature) {
+                    return res.status(401).json({ message: 'Invalid webhook signature' });
+                }
+            }
+
+            payload = this.paymentGateway.parseWebhookPayload({
+                rawBody: (req as Request & { rawBody?: Buffer }).rawBody,
+                signature: req.header('stripe-signature'),
+                body: req.body,
+            });
+        } catch (error) {
+            return res.status(400).json({
+                message: 'Invalid webhook payload',
+                error: (error as Error).message,
+            });
         }
 
-        const providerPaymentIntentId = String(req.body.providerPaymentIntentId || '');
+        const providerPaymentIntentId = payload.providerPaymentIntentId;
         if (!providerPaymentIntentId) {
             return res.status(400).json({ message: 'providerPaymentIntentId is required' });
         }
@@ -425,9 +441,9 @@ export class OperationsController {
         const payment = await PaymentModel.findOne({ providerPaymentIntentId });
         if (!payment) return res.status(404).json({ message: 'Payment not found' });
 
-        payment.status = req.body.status === 'failed' ? 'failed' : 'paid';
-        payment.transactionRef = req.body.transactionRef || payment.transactionRef;
-        payment.failureReason = req.body.failureReason;
+        payment.status = payload.status;
+        payment.transactionRef = payload.transactionRef || payment.transactionRef;
+        payment.failureReason = payload.failureReason;
         payment.paidAt = payment.status === 'paid' ? new Date() : payment.paidAt;
         await payment.save();
         await this.syncPaymentStatus(payment.bookingId);
@@ -441,7 +457,7 @@ export class OperationsController {
             action: 'payment.webhook-received',
             entityType: 'Payment',
             entityId: String(payment._id),
-            details: req.body,
+            details: payload,
         });
         return res.status(200).json({ received: true });
     };

@@ -27,9 +27,19 @@ Required variables:
 - `PORT`: API port. Use `3333` to match the Angular client defaults.
 - `MONGODB_URI`: MongoDB connection string.
 - `JWT_SECRET`: signing secret for authentication tokens. Replace the example before deploy.
+- `CORS_ORIGIN`: comma-separated allowed frontend origins. Use the deployed frontend URL in production.
 - `PAYMENT_PROVIDER`: `mock` for local/test, `stripe` for Stripe integration.
 - `STRIPE_SECRET_KEY`: required only when `PAYMENT_PROVIDER=stripe`.
-- `PAYMENT_WEBHOOK_SECRET`: optional webhook signature secret.
+- `PAYMENT_WEBHOOK_SECRET`: required in production when `PAYMENT_PROVIDER=stripe`.
+
+## Health Checks
+
+The service exposes health endpoints for hosting platforms and monitoring:
+
+- `GET /health`
+- `GET /api/v1/health`
+
+Both return `200` when the API is running and MongoDB is connected, or `503` when the database is unavailable.
 
 ## Quality Gates
 
@@ -46,7 +56,9 @@ For release validation, run the Angular client e2e suite after the service is ru
 - Use `npm ci` so the committed `package-lock.json` controls dependency versions.
 - Provide a production `MONGODB_URI`; do not rely on the local Docker Compose database.
 - Set a strong `JWT_SECRET`.
+- Set `CORS_ORIGIN` to the production frontend origin, not `*`.
 - Use `PAYMENT_PROVIDER=mock` only for demos or local validation.
+- For Stripe, set `PAYMENT_PROVIDER=stripe`, `STRIPE_SECRET_KEY`, and `PAYMENT_WEBHOOK_SECRET`.
 
 ## MongoDB Atlas Notes
 

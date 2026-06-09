@@ -1,10 +1,11 @@
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import passport from 'passport';
 import { UserModel } from '../src/infrastructure/database/mongoose/userModel.ts';
+import { getJwtSecret } from './env.ts';
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET || 'development-secret',
+    secretOrKey: getJwtSecret(),
 };
 
 passport.use(
